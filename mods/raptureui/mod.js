@@ -21,7 +21,7 @@ sc.VerionChangeLog.inject({
  }
 });
 
-rui.RIGameAddon = ig.GameAddon.extend({
+rui["RIGameAddon"] = ig.GameAddon.extend({
  init: function() {
   this.parent("RaptureUI");
   // NOTE: Only call singleton methods like this during GameAddon init and later!
@@ -29,7 +29,7 @@ rui.RIGameAddon = ig.GameAddon.extend({
   ig.storage.register(this);
  },
  onStorageSave: function(a) {
-  a.ALERT_TO_CC_DEVS = "RaptureUI in use. The game is absolutely definitely modded.";
+  a["ALERT_TO_CC_DEVS"] = "RaptureUI in use. The game is absolutely definitely modded.";
  }
 });
 ig.addGameAddon(function() {
@@ -37,21 +37,105 @@ ig.addGameAddon(function() {
 });
 ig.LANG_EDIT_SUBMIT_URL += "?modded=raptureui";
 
+// --- MODS GUI ---
+rui["showRestartWarning"] = function () {
+ sc.Dialogs.showInfoDialog("Please note that to apply these changes, you will have to restart the game.");
+ rui.showRestartWarning = function () {};
+};
+// Ok, so it's clear none of the existing GUIs fit 'big button containing long description'
+//  so let's just make one up!
+rui["ModButtonGui"] = sc.ButtonGui.extend({
+ modId: null,
+ modEnabled: false,
+ init: function (modId, wantedWidth) {
+  this.modId = modId;
+  this.modEnabled = rapture["enabledMods"].indexOf(modId) != -1;
+  this.parent(this.generateText(), wantedWidth, undefined, sc.BUTTON_TYPE.EQUIP);
+  this.textChild.setMaxWidth(wantedWidth - 8);
+  this.setHeight(this.textChild.hook.size.y + 8);
+  this.updateFancyEnabledState();
+ },
+ generateText: function () {
+  var enState = "\\c[2]ENABLED\\c[0]";
+  if (!this.modEnabled)
+   enState = "\\c[1]DISABLED\\c[0]";
+  return this.modId + ": " + enState + "\n" + rapture["loadedHeaders"].get(this.modId)["description"];
+ },
+ onButtonPress: function () {
+  if (this.modEnabled) {
+   rapture["config"]["disable-" + this.modId] = true;
+  } else {
+   delete rapture["config"]["disable-" + this.modId];
+  }
+  rapture["saveConfig"]();
+  this.modEnabled = !this.modEnabled;
+  this.updateFancyEnabledState();
+  rui.showRestartWarning();
+ },
+ updateFancyEnabledState: function () {
+  var newNinePatch = sc.BUTTON_TYPE.EQUIP.ninepatch;
+  if (!this.modEnabled) {
+   newNinePatch = ig.copy(newNinePatch.tile);
+   newNinePatch.offsets["default"].x += 64;
+   newNinePatch = new ig.NinePatch("media/gui/buttons.png", newNinePatch);
+  }
+  // Have to avoid changing size
+  this.textChild.setText(this.generateText());
+  this.bgGui.ninepatch = newNinePatch;
+ }
+});
+rui["ModsGui"] = ig.GuiElementBase.extend({
+ init: function (bBack) {
+  this.parent();
+  this.setSize(ig.system.width, ig.system.height);
+  // interact/group stuff
+  this.interact = new ig.ButtonInteractEntry();
+  this.group = new sc.ButtonGroup();
+  this.interact.pushButtonGroup(this.group);
+  this.group.addFocusGui(bBack, 0, 1);
+  // and now for...
+  var buttonWidth = 278;
+  this.listBox = new sc.ButtonListBox(0, 0, 20, 2, 0, buttonWidth);
+  var border = 4;
+  this.listBox.setPos(border, 36 + border); // More magic numbers. I should stop using these, but how to replace them?
+  this.listBox.setSize(ig.system.width - (border * 2), (ig.system.height - 36) - ((border * 2) + 8));
+  this.listBox.setButtonGroup(this.group);
+  this.addChildGui(this.listBox);
+  // Ok, now add content
+  for (var i = 0; i < rapture["knownMods"].length; i++) {
+   this.listBox.addButton(new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth));
+  }
+ },
+ "takeControl": function () {
+  ig.interact.addEntry(this.interact);
+ },
+ "loseControl": function () {
+  ig.interact.removeEntry(this.interact);
+ }
+});
 // --- TITLE SCREEN GUI ---
 sc.TitleScreenButtonGui.inject({
  "raptureuiButtons": null,
+ "raptureuiMods": null,
  init: function () {
   this.parent();
+
+  // Where in the TitleScreenButtons children-array to put the buttons.
+  // Can't be last because it'll get in front of stuff like changelog -
+  //  stuff seems to work fine if it's first?
+  // Increment after each use to keep ordering
+  var insertPoint = 0;
+
   var bWidth = sc.BUTTON_DEFAULT_WIDTH; // ^.^;
   var bAWidth = Math.floor(bWidth / 3);
   var bBWidth = bWidth - bAWidth;
   var bOfs = 12;
 
-  var brand = new sc.TextGui("Rapture Mod Loader installed", {
+  var brand = new sc.TextGui("Rapture " + rapture.version + " installed, " + rapture.enabledMods.length + " mods.", {
    font: sc.fontsystem.smallFont
   });
   brand.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  brand.setPos(bOfs + 4, 0); // hmm.
+  brand.setPos(bOfs, 0); // hmm.
   brand.hook.transitions = {};
   brand.hook.transitions["DEFAULT"] = {
    state: {},
@@ -66,7 +150,7 @@ sc.TitleScreenButtonGui.inject({
    timeFunction: KEY_SPLINES.LINEAR
   };
   brand.doStateTransition("HIDDEN", true);
-  this.addChildGui(brand);
+  this.insertChildGui(brand, insertPoint++);
 
   var bMods = new sc.ButtonGui("Mods", bAWidth);
   var bVani = new sc.ButtonGui("Run Vanilla", bBWidth);
@@ -75,12 +159,69 @@ sc.TitleScreenButtonGui.inject({
   bVani.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bVani.setPos(bOfs + bAWidth, bOfs);
   this["raptureuiButtons"] = [bMods, bVani];
-  bMods.onButtonPress = function() {
-   // Actually show mods???
-   ig.bgm.clear("MEDIUM_OUT");
-   ig.interact.removeEntry(this.buttonInteract);
-   ig.game.transitionTimer = 0.3;
+
+  // Mods GUI hide/show is handled here for simplicity.
+  // bModsBack and modsGui need to be placed at the front
+  var bModsBack = new sc.ButtonGui("Back", bAWidth);
+  bModsBack.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bModsBack.setPos(bOfs, bOfs);
+  bModsBack.hook.transitions = {};
+  bModsBack.hook.transitions["DEFAULT"] = {
+   state: {},
+   time: 0.2,
+   timeFunction: KEY_SPLINES.EASE
   };
+  bModsBack.hook.transitions["HIDDEN"] = {
+   state: {
+    offsetY: -(bOfs + 24)
+   },
+   time: 0.2,
+   timeFunction: KEY_SPLINES.LINEAR
+  };
+
+  var modsGui = new rui.ModsGui(bModsBack);
+  modsGui.hook.transitions = {};
+  modsGui.hook.transitions["DEFAULT"] = {
+   state: {},
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+  modsGui.hook.transitions["HIDDEN"] = {
+   state: {
+    offsetX: ig.system.width
+   },
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+
+  modsGui.doStateTransition("HIDDEN", true);
+  bModsBack.doStateTransition("HIDDEN", true);
+  // Note that 'bModsBack' must be over 'modsGui'.
+  this.addChildGui(modsGui);
+  this.addChildGui(bModsBack);
+  bMods.onButtonPress = function() {
+   // Get the mods panel onscreen & release control
+   ig.interact.removeEntry(this.buttonInteract);
+   modsGui["takeControl"]();
+
+   ig.bgm.pause("SLOW");
+
+   this.background.doStateTransition("DEFAULT");
+   modsGui.doStateTransition("DEFAULT");
+   bModsBack.doStateTransition("DEFAULT");
+  }.bind(this);
+  bModsBack.onButtonPress = function() {
+   // Get the mods panel offscreen & gain control
+   modsGui["loseControl"]();
+   ig.interact.addEntry(this.buttonInteract);
+
+   ig.bgm.resume("SLOW");
+
+   this.background.doStateTransition("HIDDEN");
+   modsGui.doStateTransition("HIDDEN");
+   bModsBack.doStateTransition("HIDDEN");
+  }.bind(this);
+  // ----
   bVani.onButtonPress = function() {
    this.changelogGui.clearLogs();
    ig.bgm.clear("MEDIUM_OUT");
@@ -129,16 +270,11 @@ sc.TitleScreenButtonGui.inject({
    };
    b.doStateTransition("HIDDEN", true);
    this.buttonGroup.addFocusGui(b, 0, i + 6); // eeeevil
-   this.addChildGui(b);
+   this.insertChildGui(b, insertPoint++);
   }
-  // Attach this to make it do state transitions
+  // Attach brand to this to make it do state transitions, but do it after the code that adds/positions/sets transitions for buttons,
+  //  because this is not a button.
   this["raptureuiButtons"].push(brand);
-  // Unfortunately things break if the background isn't elevated
-  this.addChildGui(this.background);
-  // this might be gotten rid of in v1.0
-  if (sc.TitlePresetMenu)
-   if (this.presetMenu instanceof sc.TitlePresetMenu)
-    this.addChildGui(this.presetMenu);
  },
  hide: function(a) {
   this.parent(a);

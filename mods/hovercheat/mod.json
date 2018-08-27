@@ -1,4 +1,4 @@
 {
- "description": "Allows you to hover by pressing Q. Effects wear off whenever the game notices.",
+ "description": "Allows you to hover by pressing P (key rebindable), via ig.game.playerEntity.fly.height. Effects wear off whenever the game notices.",
  "dependencies": []
 }
