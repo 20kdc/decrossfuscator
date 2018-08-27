@@ -12,8 +12,7 @@ rui.titleButtonCallbacks = [];
 
 // --- ACCIDENT PREVENTION ---
 // I'm not expecting a biscuit for this, but... - 20kdc
-var baseVCL = sc.VerionChangeLog;
-sc.VerionChangeLog = baseVCL.extend({
+sc.VerionChangeLog.inject({
  init: function() {
   this.parent();
  },
@@ -21,7 +20,6 @@ sc.VerionChangeLog = baseVCL.extend({
   return this.parent() + " modded";
  }
 });
-sc.version = new sc.VerionChangeLog();
 
 rui.RIGameAddon = ig.GameAddon.extend({
  init: function() {
@@ -40,8 +38,7 @@ ig.addGameAddon(function() {
 ig.LANG_EDIT_SUBMIT_URL += "?modded=raptureui";
 
 // --- TITLE SCREEN GUI ---
-var baseTSBG = sc.TitleScreenButtonGui;
-sc.TitleScreenButtonGui = baseTSBG.extend({
+sc.TitleScreenButtonGui.inject({
  "raptureuiButtons": null,
  init: function () {
   this.parent();
@@ -79,6 +76,7 @@ sc.TitleScreenButtonGui = baseTSBG.extend({
   bVani.setPos(bOfs + bAWidth, bOfs);
   this["raptureuiButtons"] = [bMods, bVani];
   bMods.onButtonPress = function() {
+   // Actually show mods???
    ig.bgm.clear("MEDIUM_OUT");
    ig.interact.removeEntry(this.buttonInteract);
    ig.game.transitionTimer = 0.3;
@@ -153,14 +151,3 @@ sc.TitleScreenButtonGui = baseTSBG.extend({
    this["raptureuiButtons"][i].doStateTransition("DEFAULT");
  }
 });
-return function (event) {
- if (event == "rapture.disable") {
-  sc.TitleScreenButtonGui = baseTSBG;
-  sc.VerionChangeLog = baseVCL;
-  // Unregister from storage
-  var rga = sc.storage.listeners.indexOf(rui.riGameAddon);
-  if (rga != -1)
-   sc.storage.listeners.splice(rga, 1);
-  delete mods.raptureui;
- }
-};
