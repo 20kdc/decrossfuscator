@@ -1,0 +1,51 @@
+# decrossfuscator - A project to undo the effects of a specific version of Google Closure Compiler for a specific game by mapping between versions.
+# Written starting in 2017 by contributors (see CREDITS.txt)
+# To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+# You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+R.G.D: Rosetta Global Data
+
+Stage 1: rosetta.sh:
+
+         +------------------------+
+R.G.D -> | rosetta-prepexterns.js | -> externs.js
+         +------------------------+
+                                                     +------------+
+v0.7.0-com ----------------------------------------> |            |
+              +---------------------------------+    | rosetta.js | -> v0.7.0 Mapping
+v0.7.0-min -> | Closure Compiler (js & mapping) | -> |            |
+externs.js -> |                                 |    +------------+
+              +---------------------------------+
+
+Stage 2: forwardmap.sh:
+
+                  +---------------+
+R.G.D ----------> |               |
+Gfunc Matchers -> |               |
+v0.7.0 Mapping -> | forwardmap.js | -> Target Mapping
+Target JS-------> |               |
+                  +---------------+
+
+The googlefunc matchers are used because as it turns out the existence of a few symbols rely heavily on googlefuncs working properly.
+
+Stage 3: mergemap.sh:
+                        +-------------+
+Target Mapping -------> |             |
+Googlefunc Matchers --> | mergemap.js | -> Target Mapping
+Handmade Matchers ----> |             |
+R.G.D ----------------> |             |
+                        +-------------+
+
+The googlefunc matchers are used "in cooperation with" the handmade matchers.
+The Map used for matching is a fake designed to merge these views to keep things coherent.
+
+NOTE! mergemap.sh is an in-place process.
+Matchers in it are allowed to rely on existing mapping data.
+
+Stage 4: deobf.sh:
+                   +----------+
+Target JS--------> |          |
+Gfunc-Matchers---> | deobf.js | -> Target Deobf. JS -> [js-beautify] -> Target Deobf. Beautified JS
+Target Mapping---> |          |
+                   +----------+
+

@@ -1,0 +1,16 @@
+{
+ "includes" : [],
+ "snippets" : [
+  [
+   ["googleThrow", "googleUndefined", "googleTrue", "googleNull", "googleFalse", "googleNewIdentity", "googleNewNop", "googleNewSetter", "googleNewGetter", "googleNewFinal"],
+   ["e", "g", "h", "q", "x", "G", "I", "K", "T", "Z"],
+   ["function e($$){throw $$;}var g=void 0,h=!0,q=null,x=!1;",
+    "function G(){return function($$){return $$}}",
+    "function I(){return function(){}}",
+    "function K($$){return function($$){this[$$]=$$}}",
+    "function T($$){return function(){return this[$$]}}",
+    "function Z($$){return function(){return $$}}"]
+  ]
+ ],
+ "deleteThese" : []
+}

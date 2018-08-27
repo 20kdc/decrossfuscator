@@ -1,0 +1,35 @@
+<html>
+ <body>
+  <h1>Rapture Installer and Neural Network Accumulator</h1>
+  HELLO HUMAN. THIS TEXT IS USED WHILE THE RAPTURE SYSTEM IS ADDED INTO AN EXISTING HTML FILE. <br/>
+  THIS FILE EXISTS TO PREVENT CC DEVS FROM BUGGING ME ABOUT COPYING A CC FILE, MODIFYING IT, AND USING IT. <br/>
+  SO INSTEAD, THIS PROGRAM HAS BEEN DEPLOYED TO DO IT FOR ME ON YOUR SYSTEM, WHERE NOBODY WILL NOTICE. <br/>
+  THESE RIaNNA SYSTEMS HAVE A SHORT LIFE, BUT, IT IS GOOD. <br/>
+  GOODBYE, HUMAN. <br/>
+  (IF YOU ARE STILL SEEING THIS TEXT AFTER ABOUT A SECOND, SOMETHING WENT WRONG. PRESS F12 & REPORT TO RAPTURE DEVELOPMENT TEAM.)<br/>
+  <script>//<!--
+  /*
+   * decrossfuscator - A project to undo the effects of a specific version of Google Closure Compiler for a specific game by mapping between versions.
+   * Written starting in 2017 by contributors (see CREDITS.txt)
+   * To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+   * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+   */
+
+   window.FOR_THE_CROSSCODE_TEAM = "Good to see you're reading through the Rapture codebase! Hope you're having fun. Don't tell Teh or I'll be getting horrified looks all day. - 20kdc";
+   var fs = require("fs");
+   var str = fs.readFileSync("assets/node-webkit.html", "utf8");
+   var strPre = str.substring(0, str.indexOf("</head>"));
+   var strPost = str.substring(str.indexOf("</head>"));
+   var scp = "script"; // html fun
+   str = strPre + "<" + scp + " type=\"text/javascript\" src=\"rapture.js\"></" + scp + ">" + strPost;
+   // Patch the HTML to insert more Rapture
+   fs.writeFileSync("assets/rapture-boot0.html.boot1.html", str, "utf8");
+   var json = JSON.parse(fs.readFileSync("package.json", "utf8"));
+   json.main = "assets/rapture-boot0.html.boot1.html";
+   json.name = "CrossCode"; // For save/load.
+   fs.writeFileSync("package.json", JSON.stringify(json), "utf8");
+   location.href += ".boot1.html";
+   //-->
+  </script>
+ </body>
+</html>

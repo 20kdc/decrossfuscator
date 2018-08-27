@@ -1,0 +1,13 @@
+{
+ "description": "Even though this isn't actually CrossCode's package it must be called that for save/load.",
+ "name": "CrossCode",
+ "version" : "0.0.1",
+ "main": "subdir/assets/deobf.html",
+ "chromium-args" : "--ignore-gpu-blacklist",
+ "window" : {
+  "toolbar" : true,
+  "width" : 1136,
+  "height": 640,
+  "fullscreen" : false
+ }
+}

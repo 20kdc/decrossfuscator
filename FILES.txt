@@ -1,0 +1,42 @@
+# decrossfuscator - A project to undo the effects of a specific version of Google Closure Compiler for a specific game by mapping between versions.
+# Written starting in 2017 by contributors (see CREDITS.txt)
+# To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+# You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
+
+NOTE: versions/target should ideally be a symlink to your target version of choice.
+This means you can just run a command without args and get the intended effect in all cases.
+The only other 'special version' is 'versions/steam/0.7.0'.
+
+0.9.8-7
+
+rosetta.sh [ROOT:.] [VERSION:target] : makes a deobf.map for a version based on official developer pre-obfuscated '.min.js'
+forwardmap.sh [ROOT:.] [SRCVER:steam/0.7.0] [DSTVER:target] : makes a deobf-forward.map (that's copied to deobf.map) for a new version's JS based on an old version's map & obf. JS
+forwardmap-2.sh [ROOT:.] [SRCVER:steam/0.7.0] [DSTVER:target] : Tries to use deobf-forward.map to find more matches for deobf-forward.map, copies to deobf.map
+mergemap.sh [ROOT:.] [VERSION:target] [MATCHERS:matchers/fixup.json] : starts with deobf-forward.map, adds matchers, overwrites deobf.map
+deobf.sh [ROOT:.] [VERSION:target] : creates deobfuscated JS for a version
+and `node reobf.js <js> <map>` outputs obfuscated JS,
+ this is useful reference source for a modloader developer
+
+workbench/ : Electron application for running game deobfuscated
+lib/ : core libs
+lib/rosetta-global-data.js : global data for Rosetta system
+matchers/ : matcher libraries
+matchers/google.json : googlefuncs
+matchers/fixup.json : fixes to deobf.map
+workfiles/closure-compiler-20120711/build/compiler.jar : must exist & have correct version for rosetta translation of 0.7.0!!!
+versions/ : Contains versions in whatever structure you choose.
+ versions/steam/0.7.0 : example: 'steam/0.7.0' version, contains 'subdir' and working files
+  versions/steam/0.7.0/deobf.map : considered the definitive map for this version, used for forwardmap and created by forwardmap, used for deobf
+  versions/steam/0.7.0/deobf-forward.map : Backup copy created *after* forwardmap, and used by mergemap.
+                                           Exists so mergemap always starts off of forwardmap's base.
+                                           Essentially, forwardmap creates deobf.map solely in case you want to skip mergemap.
+                                           NOTE: 0.7.0 doesn't actually have one of these
+  versions/steam/0.7.0/rosetta-externs.js : Temporary file used during Rosetta : Externs for ClosureCompiler
+  versions/steam/0.7.0/rosetta-emulation.js : Temporary file used during Rosetta : Structurally identical file to dev's OBF version
+  versions/steam/0.7.0/rosetta-emulation.map : Temporary file used during Rosetta : Deobf map for rosetta-emulation.js to be ported to dev's OBF version via rosetta process
+  versions/steam/0.7.0/subdir/CrossCode : linux startup
+  versions/steam/0.7.0/subdir/CrossCode.exe : windows startup
+  versions/steam/0.7.0/subdir/assets/js/game.compiled.js : Actual game distribution JS
+  versions/steam/0.7.0/subdir/assets/js/game.min.js : Only 0.7.0 has this, but if available, rosetta.sh can create a 'perfect deobf' quickly
+ versions/DEMO : example: 'DEMO' version
+

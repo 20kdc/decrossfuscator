@@ -1,0 +1,12 @@
+{
+ "name": "RaptureBoot Initialization Helper",
+ "version" : "0.0.1",
+ "main": "assets/rapture-boot0.html",
+ "chromium-args" : "--ignore-gpu-blacklist",
+ "window" : {
+  "toolbar" : true,
+  "width" : 568,
+  "height": 320,
+  "fullscreen" : false
+ }
+}
