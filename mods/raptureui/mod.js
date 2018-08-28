@@ -331,8 +331,8 @@ sc.TitleScreenButtonGui.inject({
   if (this["raptureuiFirstRun"]) {
    sc.Dialogs.showInfoDialog(
     "Rapture has been installed successfully.\n" +
-    "You can temporarily return to vanilla by clicking Run Vanilla, or more permanently by editing package.json and replacing 'rapture-boot0.html.boot1.html' with 'node-webkit.html'.\n" +
-    "Some 'cheat' mods have been left disabled. You can enable them in the Mods panel."
+    "You can temporarily return to vanilla by clicking Run Vanilla, or more permanently by going to the Mods panel and pressing 'Uninstall Rapture'.\n" +
+    "Most mods have been left disabled. You can enable them in the Mods panel."
    );
    this["raptureuiFirstRun"] = false;
   }

@@ -1,0 +1,5 @@
+{
+ "description": "Increases the resolution the game runs at. Will cause display glitches.",
+ "disableByDefault": true,
+ "dependencies": []
+}
