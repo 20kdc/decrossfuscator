@@ -25,8 +25,12 @@
    // Patch the HTML to insert more Rapture
    fs.writeFileSync("assets/rapture-boot0.html.boot1.html", str, "utf8");
    var json = JSON.parse(fs.readFileSync("package.json", "utf8"));
+   // Inject Rapture
    json.main = "assets/rapture-boot0.html.boot1.html";
-   json.name = "CrossCode"; // For save/load.
+   // Restore these parts to original values
+   delete json.comm;
+   json.version = "0.2.2";
+   //
    fs.writeFileSync("package.json", JSON.stringify(json), "utf8");
    location.href += ".boot1.html";
    //-->

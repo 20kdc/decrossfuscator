@@ -1,4 +1,5 @@
 {
  "description": "UI for the Rapture modloader. Do not disable unless you know what you're doing!",
+ "disableByDefault": false,
  "dependencies": []
 }

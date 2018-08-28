@@ -62,6 +62,16 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
   return this.modId + ": " + enState + "\n" + rapture["loadedHeaders"].get(this.modId)["description"];
  },
  onButtonPress: function () {
+  if (this.modId == "raptureui") {
+   sc.Dialogs.showYesNoDialog("This mod is responsible for the mod management UI - disabling it will leave you unable to enable it again.\nShould you continue, please note: Deleting rapture.json should undo your decision.", sc.DIALOG_INFO_ICON.WARNING, function (r) {
+    if (r.data == 0)
+     this.actuallyToggleModState();
+   }.bind(this));
+  } else {
+   this.actuallyToggleModState();
+  }
+ },
+ actuallyToggleModState: function () {
   if (this.modEnabled) {
    rapture["config"]["disable-" + this.modId] = true;
   } else {
@@ -85,16 +95,17 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
  }
 });
 rui["ModsGui"] = ig.GuiElementBase.extend({
- init: function (bBack) {
+ init: function (bBack, bUninstall) {
   this.parent();
   this.setSize(ig.system.width, ig.system.height);
   // interact/group stuff
   this.interact = new ig.ButtonInteractEntry();
   this.group = new sc.ButtonGroup();
   this.interact.pushButtonGroup(this.group);
-  this.group.addFocusGui(bBack, 0, 1);
+  this.group.addFocusGui(bBack, 0, 0);
+  this.group.addFocusGui(bUninstall, 1, 0);
   // and now for...
-  var buttonWidth = 278;
+  var buttonWidth = Math.floor((ig.system.width - 12) / 2);
   this.listBox = new sc.ButtonListBox(0, 0, 20, 2, 0, buttonWidth);
   var border = 4;
   this.listBox.setPos(border, 36 + border); // More magic numbers. I should stop using these, but how to replace them?
@@ -103,7 +114,9 @@ rui["ModsGui"] = ig.GuiElementBase.extend({
   this.addChildGui(this.listBox);
   // Ok, now add content
   for (var i = 0; i < rapture["knownMods"].length; i++) {
-   this.listBox.addButton(new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth));
+   var bt = new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth);
+   this.listBox.addButton(bt, true);
+   this.group.insertFocusGui(bt, i % 2, 1 + Math.floor(i / 2));
   }
  },
  "takeControl": function () {
@@ -117,6 +130,7 @@ rui["ModsGui"] = ig.GuiElementBase.extend({
 sc.TitleScreenButtonGui.inject({
  "raptureuiButtons": null,
  "raptureuiMods": null,
+ "raptureuiFirstRun": rapture["firstRun"],
  init: function () {
   this.parent();
 
@@ -165,7 +179,13 @@ sc.TitleScreenButtonGui.inject({
   var bModsBack = new sc.ButtonGui("Back", bAWidth);
   bModsBack.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bModsBack.setPos(bOfs, bOfs);
+
+  var bModsUninstall = new sc.ButtonGui("Uninstall Rapture");
+  bModsUninstall.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bModsUninstall.setPos(bOfs + bAWidth, bOfs);
+
   bModsBack.hook.transitions = {};
+  bModsUninstall.hook.transitions = bModsBack.hook.transitions;
   bModsBack.hook.transitions["DEFAULT"] = {
    state: {},
    time: 0.2,
@@ -179,7 +199,7 @@ sc.TitleScreenButtonGui.inject({
    timeFunction: KEY_SPLINES.LINEAR
   };
 
-  var modsGui = new rui.ModsGui(bModsBack);
+  var modsGui = new rui.ModsGui(bModsBack, bModsUninstall);
   modsGui.hook.transitions = {};
   modsGui.hook.transitions["DEFAULT"] = {
    state: {},
@@ -196,9 +216,11 @@ sc.TitleScreenButtonGui.inject({
 
   modsGui.doStateTransition("HIDDEN", true);
   bModsBack.doStateTransition("HIDDEN", true);
+  bModsUninstall.doStateTransition("HIDDEN", true);
   // Note that 'bModsBack' must be over 'modsGui'.
   this.addChildGui(modsGui);
   this.addChildGui(bModsBack);
+  this.addChildGui(bModsUninstall);
   bMods.onButtonPress = function() {
    // Get the mods panel onscreen & release control
    ig.interact.removeEntry(this.buttonInteract);
@@ -209,6 +231,7 @@ sc.TitleScreenButtonGui.inject({
    this.background.doStateTransition("DEFAULT");
    modsGui.doStateTransition("DEFAULT");
    bModsBack.doStateTransition("DEFAULT");
+   bModsUninstall.doStateTransition("DEFAULT");
   }.bind(this);
   bModsBack.onButtonPress = function() {
    // Get the mods panel offscreen & gain control
@@ -220,6 +243,23 @@ sc.TitleScreenButtonGui.inject({
    this.background.doStateTransition("HIDDEN");
    modsGui.doStateTransition("HIDDEN");
    bModsBack.doStateTransition("HIDDEN");
+   bModsUninstall.doStateTransition("HIDDEN");
+  }.bind(this);
+  bModsUninstall.onButtonPress = function() {
+   sc.Dialogs.showYesNoDialog("This will delete Rapture files and try to restore the game to an unmodded state. Are you sure you want to do this?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
+    if (r.data == 0) {
+     // Go to title screen and then out of title screen
+     modsGui["loseControl"]();
+     this.background.doStateTransition("HIDDEN");
+     modsGui.doStateTransition("HIDDEN");
+     bModsBack.doStateTransition("HIDDEN");
+     bModsUninstall.doStateTransition("HIDDEN");
+
+     this.changelogGui.clearLogs();
+     ig.game.start(sc.START_MODE.STORY, 1);
+     ig.game.transitionEnded = rapture.uninstall;
+    }
+   }.bind(this));
   }.bind(this);
   // ----
   bVani.onButtonPress = function() {
@@ -235,7 +275,7 @@ sc.TitleScreenButtonGui.inject({
    // So in the end trying to start the game and hooking immediately has...
    //  about the same effect as actually trying to follow this system (and thus defining a new constant/etc.)
    ig.game.start(sc.START_MODE.STORY, 1);
-   ig.game.transitionEnded = function () { location.href = "node-webkit.html"; };
+   ig.game.transitionEnded = rapture.runVanilla;
   }.bind(this);
   // save some trouble and let mods inject their own buttons if raptureui is in use
   // it'll mean it can be listbox'd later
@@ -244,12 +284,17 @@ sc.TitleScreenButtonGui.inject({
    b.onButtonPress = mods.raptureui.titleButtonCallbacks[i];
    this["raptureuiButtons"].push(b);
   }
+  var bRow = 6; // EEevil
   for (var i = 0; i < this["raptureuiButtons"].length; i++) {
    var b = this["raptureuiButtons"][i];
    // for the two "main" buttons they do custom stuff
+   var bCol = 0;
    if (i >= 2) {
     b.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
     b.setPos(bOfs, bOfs + ((i - 1) * 28)); // I wasn't able to find the variable that they use. Somehow.
+    bRow++; // Do it here so button 2 is moved down from buttons 0/1
+   } else {
+    bCol = i;
    }
    // This is a really cool animation framework
    //  and it's kind of a shame nobody gets to look at it
@@ -269,7 +314,7 @@ sc.TitleScreenButtonGui.inject({
     timeFunction: KEY_SPLINES.LINEAR
    };
    b.doStateTransition("HIDDEN", true);
-   this.buttonGroup.addFocusGui(b, 0, i + 6); // eeeevil
+   this.buttonGroup.addFocusGui(b, bCol, bRow);
    this.insertChildGui(b, insertPoint++);
   }
   // Attach brand to this to make it do state transitions, but do it after the code that adds/positions/sets transitions for buttons,
@@ -283,6 +328,14 @@ sc.TitleScreenButtonGui.inject({
  },
  show: function() {
   this.parent();
+  if (this["raptureuiFirstRun"]) {
+   sc.Dialogs.showInfoDialog(
+    "Rapture has been installed successfully.\n" +
+    "You can temporarily return to vanilla by clicking Run Vanilla, or more permanently by editing package.json and replacing 'rapture-boot0.html.boot1.html' with 'node-webkit.html'.\n" +
+    "Some 'cheat' mods have been left disabled. You can enable them in the Mods panel."
+   );
+   this["raptureuiFirstRun"] = false;
+  }
   for (var i = 0; i < this["raptureuiButtons"].length; i++)
    this["raptureuiButtons"][i].doStateTransition("DEFAULT");
  }

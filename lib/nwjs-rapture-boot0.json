@@ -1,12 +1,13 @@
 {
- "name": "RaptureBoot Initialization Helper",
- "version" : "0.0.1",
+ "comm": "Not actually CrossCode, but CrossCode + Rapture",
+ "name": "CrossCode",
+ "version" : "rapture-boot0",
  "main": "assets/rapture-boot0.html",
  "chromium-args" : "--ignore-gpu-blacklist",
  "window" : {
   "toolbar" : true,
-  "width" : 568,
-  "height": 320,
+  "width" : 1136,
+  "height": 640,
   "fullscreen" : false
  }
 }
