@@ -17,3 +17,7 @@ for (var p = oldMap.keys(), n = null; (n = p.next()) && !n.done;)
  if (!newMap.has(n.value))
   console.log(n.value + " missing, was " + oldMap.get(n.value));
 
+for (var p = newMap.keys(), n = null; (n = p.next()) && !n.done;)
+ if (!oldMap.has(n.value))
+  console.log(n.value + " added as " + newMap.get(n.value));
+
