@@ -95,15 +95,18 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
  }
 });
 rui["ModsGui"] = ig.GuiElementBase.extend({
- init: function (bBack, bUninstall) {
+ "raptureuiButtons": null,
+ init: function (btns) {
   this.parent();
   this.setSize(ig.system.width, ig.system.height);
   // interact/group stuff
   this.interact = new ig.ButtonInteractEntry();
   this.group = new sc.ButtonGroup();
   this.interact.pushButtonGroup(this.group);
-  this.group.addFocusGui(bBack, 0, 0);
-  this.group.addFocusGui(bUninstall, 1, 0);
+  for (var i = 0; i < btns.length; i++) {
+   this.group.addFocusGui(btns[i], i, 0);
+  }
+  this.raptureuiButtons = btns;
   // and now for...
   var buttonWidth = Math.floor((ig.system.width - 12) / 2);
   this.listBox = new sc.ButtonListBox(0, 0, 20, 2, 0, buttonWidth);
@@ -120,10 +123,18 @@ rui["ModsGui"] = ig.GuiElementBase.extend({
   }
  },
  "takeControl": function () {
+  this.doStateTransition("DEFAULT");
+  for (var i = 0; i < this["raptureuiButtons"].length; i++) {
+   this["raptureuiButtons"][i].doStateTransition("DEFAULT");
+  }
   ig.interact.addEntry(this.interact);
  },
  "loseControl": function () {
   ig.interact.removeEntry(this.interact);
+  this.doStateTransition("HIDDEN");
+  for (var i = 0; i < this["raptureuiButtons"].length; i++) {
+   this["raptureuiButtons"][i].doStateTransition("HIDDEN");
+  }
  }
 });
 // --- TITLE SCREEN GUI ---
@@ -172,96 +183,6 @@ sc.TitleScreenButtonGui.inject({
   bMods.setPos(bOfs, bOfs);
   bVani.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bVani.setPos(bOfs + bAWidth, bOfs);
-  this["raptureuiButtons"] = [bMods, bVani];
-
-  // Mods GUI hide/show is handled here for simplicity.
-  // bModsBack and modsGui need to be placed at the front
-  var bModsBack = new sc.ButtonGui("Back", bAWidth);
-  bModsBack.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  bModsBack.setPos(bOfs, bOfs);
-
-  var bModsUninstall = new sc.ButtonGui("Uninstall Rapture");
-  bModsUninstall.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  bModsUninstall.setPos(bOfs + bAWidth, bOfs);
-
-  bModsBack.hook.transitions = {};
-  bModsUninstall.hook.transitions = bModsBack.hook.transitions;
-  bModsBack.hook.transitions["DEFAULT"] = {
-   state: {},
-   time: 0.2,
-   timeFunction: KEY_SPLINES.EASE
-  };
-  bModsBack.hook.transitions["HIDDEN"] = {
-   state: {
-    offsetY: -(bOfs + 24)
-   },
-   time: 0.2,
-   timeFunction: KEY_SPLINES.LINEAR
-  };
-
-  var modsGui = new rui.ModsGui(bModsBack, bModsUninstall);
-  modsGui.hook.transitions = {};
-  modsGui.hook.transitions["DEFAULT"] = {
-   state: {},
-   time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
-  };
-  modsGui.hook.transitions["HIDDEN"] = {
-   state: {
-    offsetX: ig.system.width
-   },
-   time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
-  };
-
-  modsGui.doStateTransition("HIDDEN", true);
-  bModsBack.doStateTransition("HIDDEN", true);
-  bModsUninstall.doStateTransition("HIDDEN", true);
-  // Note that 'bModsBack' must be over 'modsGui'.
-  this.addChildGui(modsGui);
-  this.addChildGui(bModsBack);
-  this.addChildGui(bModsUninstall);
-  bMods.onButtonPress = function() {
-   // Get the mods panel onscreen & release control
-   ig.interact.removeEntry(this.buttonInteract);
-   modsGui["takeControl"]();
-
-   ig.bgm.pause("SLOW");
-
-   this.background.doStateTransition("DEFAULT");
-   modsGui.doStateTransition("DEFAULT");
-   bModsBack.doStateTransition("DEFAULT");
-   bModsUninstall.doStateTransition("DEFAULT");
-  }.bind(this);
-  bModsBack.onButtonPress = function() {
-   // Get the mods panel offscreen & gain control
-   modsGui["loseControl"]();
-   ig.interact.addEntry(this.buttonInteract);
-
-   ig.bgm.resume("SLOW");
-
-   this.background.doStateTransition("HIDDEN");
-   modsGui.doStateTransition("HIDDEN");
-   bModsBack.doStateTransition("HIDDEN");
-   bModsUninstall.doStateTransition("HIDDEN");
-  }.bind(this);
-  bModsUninstall.onButtonPress = function() {
-   sc.Dialogs.showYesNoDialog("This will delete Rapture files and try to restore the game to an unmodded state. Are you sure you want to do this?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
-    if (r.data == 0) {
-     // Go to title screen and then out of title screen
-     modsGui["loseControl"]();
-     this.background.doStateTransition("HIDDEN");
-     modsGui.doStateTransition("HIDDEN");
-     bModsBack.doStateTransition("HIDDEN");
-     bModsUninstall.doStateTransition("HIDDEN");
-
-     this.changelogGui.clearLogs();
-     ig.game.start(sc.START_MODE.STORY, 1);
-     ig.game.transitionEnded = rapture.uninstall;
-    }
-   }.bind(this));
-  }.bind(this);
-  // ----
   bVani.onButtonPress = function() {
    this.changelogGui.clearLogs();
    ig.bgm.clear("MEDIUM_OUT");
@@ -277,6 +198,129 @@ sc.TitleScreenButtonGui.inject({
    ig.game.start(sc.START_MODE.STORY, 1);
    ig.game.transitionEnded = rapture.runVanilla;
   }.bind(this);
+  this["raptureuiButtons"] = [bMods, bVani];
+
+  // Mods GUI hide/show is handled here for simplicity.
+  // bModsBack and modsGui need to be placed at the front
+  var bModsBack = new sc.ButtonGui("Back", bAWidth);
+  bModsBack.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bModsBack.setPos(bOfs, bOfs);
+
+  var bModsUninstall = new sc.ButtonGui("Uninstall Rapture");
+  bModsUninstall.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bModsUninstall.setPos(bOfs + bAWidth, bOfs);
+
+  var bModsInsp = new sc.ButtonGui("Open Inspector");
+  bModsInsp.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bModsInsp.setPos(bOfs + bAWidth + bModsUninstall.hook.size.x, bOfs);
+
+  var modsGuiTopButtons = [bModsBack, bModsUninstall, bModsInsp];
+
+  // Everything from here on should treat the buttons as a group.
+  // Transition Setup...
+  var modsGuiTopTransition = {
+   "DEFAULT": {
+    state: {},
+    time: 0.2,
+    timeFunction: KEY_SPLINES.EASE
+   },
+   "HIDDEN": {
+    state: {
+     offsetY: -(bOfs + 24)
+    },
+    time: 0.2,
+    timeFunction: KEY_SPLINES.LINEAR
+   }
+  };
+  for (var i = 0; i < modsGuiTopButtons.length; i++) {
+   modsGuiTopButtons[i].hook.transitions = modsGuiTopTransition;
+  }
+
+  // Mods GUI
+  var modsGui = new rui.ModsGui(modsGuiTopButtons);
+  modsGui.hook.transitions = {};
+  modsGui.hook.transitions["DEFAULT"] = {
+   state: {},
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+  modsGui.hook.transitions["HIDDEN"] = {
+   state: {
+    offsetX: ig.system.width
+   },
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+
+  modsGui.doStateTransition("HIDDEN", true);
+
+  // Note that 'bModsBack' must be over 'modsGui'.
+  this.addChildGui(modsGui);
+  for (var i = 0; i < modsGuiTopButtons.length; i++) {
+   modsGuiTopButtons[i].doStateTransition("HIDDEN", true);
+   this.addChildGui(modsGuiTopButtons[i]);
+  }
+  // Mods GUI Top Button Event Handlers
+  bMods.onButtonPress = function() {
+   // Get the mods panel onscreen & release control
+   ig.bgm.pause("SLOW");
+   ig.interact.removeEntry(this.buttonInteract);
+
+   this.background.doStateTransition("DEFAULT");
+   modsGui["takeControl"]();
+  }.bind(this);
+  bModsBack.onButtonPress = function() {
+   // Get the mods panel offscreen & gain control
+   modsGui["loseControl"]();
+   this.background.doStateTransition("HIDDEN");
+
+   ig.interact.addEntry(this.buttonInteract);
+   ig.bgm.resume("SLOW");
+  }.bind(this);
+  bModsUninstall.onButtonPress = function() {
+   sc.Dialogs.showYesNoDialog("This will delete Rapture files and try to restore the game to an unmodded state. Are you sure you want to do this?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
+    if (r.data == 0) {
+     // Go to title screen and then out of title screen
+     modsGui["loseControl"]();
+     this.background.doStateTransition("HIDDEN");
+
+     this.changelogGui.clearLogs();
+     ig.game.start(sc.START_MODE.STORY, 1);
+     ig.game.transitionEnded = rapture.uninstall;
+    }
+   }.bind(this));
+  }.bind(this);
+  bModsInsp.onButtonPress = function() {
+   var nwWindow = require('nw.gui').Window.get();
+   nwWindow.showDevTools();
+   sc.Dialogs.showYesNoDialog(
+    "Opened. Note that the inspector may not work in 0.9.8-8 and onwards.\n" +
+    "These versions use a newer version of nw.js with debugging off, that does not support the web inspector.\n" +
+    "Should a browser be opened to a page to get the older version?\n" +
+    "(NOTE: On this page, see 'Downgrading NW.js')",
+    sc.DIALOG_INFO_ICON.WARNING, function (r) {
+    if (r.data == 0) {
+     var url = "https://steamcommunity.com/games/368340/announcements/detail/2676716678827055494";
+     var plat = process.platform;
+     var cmd = "xdg-open"; // This *should* work on all popularish non-Windows non-Apple systems (Linux & BSDs)
+     if (plat == "haiku") {
+      cmd = "open";
+     } else if (plat == "sunos") {
+      // no, I don't have any evidence to suggest this is the command,
+      //  but it's a better shot than "xdg-open" on something before xdg was really a thing
+      cmd = "open";
+     } else if (plat == "darwin") {
+      cmd = "open";
+     } else if (plat == "windows") {
+      cmd = "start";
+     }
+     require("child_process").execFile(cmd, [url]);
+     // Really just an alert() so the user can type it manually.
+     alert(url + " opened with " + cmd + ". Please see 'Downgrading NW.js' on this page.");
+    }
+   }.bind(this));
+  }.bind(this);
+  // ----
   // save some trouble and let mods inject their own buttons if raptureui is in use
   // it'll mean it can be listbox'd later
   for (var i = 0; i < mods.raptureui.titleButtons.length; i++) {
@@ -332,7 +376,8 @@ sc.TitleScreenButtonGui.inject({
    sc.Dialogs.showInfoDialog(
     "Rapture has been installed successfully.\n" +
     "You can temporarily return to vanilla by clicking Run Vanilla, or more permanently by going to the Mods panel and pressing 'Uninstall Rapture'.\n" +
-    "Most mods have been left disabled. You can enable them in the Mods panel."
+    "Most mods have been left disabled. You can enable them in the Mods panel.\n" +
+    "Furthermore, the Mods panel has access to the Web Inspector."
    );
    this["raptureuiFirstRun"] = false;
   }
