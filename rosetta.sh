@@ -19,7 +19,8 @@
 #  to a mapping between .compiled.js and .min.js - this can then be made cross-version.
 #
 # Expects 'root' folder as first arg, but will substitute '.' otherwise.
-# Expects a CrossCode version as second arg, but defaults to 0.7.0 (the version it was tested with)
+# Expects a CrossCode version as second arg, but defaults to steam/0.7.0 as 
+#  this is the only practical version.
 # Writes intermediate files and result into "workfiles/" in there.
 
 ROOTDIR=${1:-.}

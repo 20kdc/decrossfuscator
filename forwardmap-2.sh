@@ -7,11 +7,11 @@
 
 # Forwardmap makes bringing symbols into the future *practical.*
 # Expects 'root' folder as first arg, but will substitute '.' otherwise.
-# Expects the 'source' CrossCode version as second arg, but defaults to steam/0.7.0
+# Expects the 'source' CrossCode version as second arg, but defaults to source
 # Expects the 'target' CrossCode version as third arg, but defaults to target
 
 ROOTDIR=${1:-.}
-SVERSION=${2:-steam/0.7.0}
+SVERSION=${2:-source}
 TVERSION=${3:-target}
 
 SJMF=$ROOTDIR/versions/$SVERSION

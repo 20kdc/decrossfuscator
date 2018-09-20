@@ -7,8 +7,7 @@
 
 # Compmap shows missing symbols.
 # Expects 'root' folder as first arg, but will substitute '.' otherwise.
-# Expects the 'source' CrossCode version as second arg, but defaults to steam/0.7.0
-# Expects the 'target' CrossCode version as third arg, but defaults to target
+# Expects the 'target' CrossCode version as second arg, but defaults to target
 
 ROOTDIR=${1:-.}
 TVERSION=${2:-target}

@@ -8,4 +8,4 @@
 # Ensure you have debugCandidates on.
 # This'll have enough to get you a few candidates so you can validate correctness of the worker
 # This script is because the output stuff wasn't working
-node forwardmap-worker.js ./versions/steam/0.7.0/subdir/assets/js/game.compiled.js 0 5000 ./versions/steam/0.7.0/deobf.map ./versions/target/subdir/assets/js/game.compiled.js ./workfiles/0.json debug
+node forwardmap-worker.js ./versions/steam/0.7.0/subdir/assets/js/game.compiled.js 0 5000 ./versions/source/deobf.map ./versions/target/subdir/assets/js/game.compiled.js ./workfiles/0.json debug

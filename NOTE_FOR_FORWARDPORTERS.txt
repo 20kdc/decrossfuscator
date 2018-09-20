@@ -4,7 +4,8 @@ you're supposed to:
 3. forwardmap-2
 4. mergemap
 5. forwardmap-2
-6. mergemap
 
 this is because fixup fixes some broken stuff and forwardmap-2 benefits from these fixes
-the last mergemap is to finish up deletions
+note that the lack of a final mergemap is so that deletions can be
+ used to allow the fixed results to just magically appear,
+ which is as it turns out wasn't happening previously

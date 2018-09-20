@@ -11,7 +11,7 @@
 # Expects the 'target' CrossCode version as third arg, but defaults to target
 
 ROOTDIR=${1:-.}
-SVERSION=${2:-steam/0.7.0}
+SVERSION=${2:-source}
 TVERSION=${3:-target}
 
 SJMF=$ROOTDIR/versions/$SVERSION
