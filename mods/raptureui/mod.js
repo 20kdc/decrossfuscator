@@ -7,7 +7,7 @@
 
 window["mods"]["raptureui"] = {};
 var rui = window["mods"]["raptureui"];
-rui.titleButtons = ["CRASH"];
+rui.titleButtons = [];
 rui.titleButtonCallbacks = [];
 
 // --- ACCIDENT PREVENTION ---
