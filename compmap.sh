@@ -14,7 +14,7 @@
 ROOTDIR=${1:-.}
 SVERSION=${2:-source}
 TVERSION=${3:-target}
-MATCHERS=${3:-fixup}
+MATCHERS=${4:-fixup}
 
 SJMF=$ROOTDIR/versions/$SVERSION
 TJMF=$ROOTDIR/versions/$TVERSION
