@@ -1,5 +1,5 @@
 {
- "description": "Increases the resolution the game runs at. Will cause display glitches.",
+ "description": "Increases the resolution the game runs at. Will cause display glitches. Do not enable on Double pixel size.",
  "disableByDefault": true,
  "dependencies": []
 }

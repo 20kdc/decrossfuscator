@@ -9,10 +9,12 @@
 # Expects 'root' folder as first arg, but will substitute '.' otherwise.
 # Expects the 'source' CrossCode version as second arg, but defaults to steam/0.7.0
 # Expects the 'target' CrossCode version as third arg, but defaults to target
+# Expects a matcher library
 
 ROOTDIR=${1:-.}
 SVERSION=${2:-source}
 TVERSION=${3:-target}
+MATCHERS=${3:-fixup}
 
 SJMF=$ROOTDIR/versions/$SVERSION
 TJMF=$ROOTDIR/versions/$TVERSION
@@ -20,4 +22,4 @@ TJMF=$ROOTDIR/versions/$TVERSION
 SJSF=$SJMF/subdir/assets/js/game.compiled.js
 TJSF=$TJMF/subdir/assets/js/game.compiled.js
 
-node compmap.js $SJMF/deobf.map $TJMF/deobf.map
+node compmap.js $SJMF/deobf.map $TJMF/deobf.map $MATCHERS

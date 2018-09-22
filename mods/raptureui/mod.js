@@ -7,17 +7,24 @@
 
 window["mods"]["raptureui"] = {};
 var rui = window["mods"]["raptureui"];
-rui.titleButtons = [];
+rui.titleButtons = ["CRASH"];
 rui.titleButtonCallbacks = [];
 
 // --- ACCIDENT PREVENTION ---
 // I'm not expecting a biscuit for this, but... - 20kdc
 sc.VerionChangeLog.inject({
- init: function() {
-  this.parent();
- },
  toOnlyNumberString: function() {
   return this.parent() + " modded";
+ }
+});
+
+var ccDeveloperAlert = "RaptureUI in use, Rapture " + rapture.version + ". This save came directly from a modded copy of the game.";
+var ccDeveloperAlertLongterm = "RaptureUI was previously used as part of this save's history. If you do not see an ALERT_TO_CC_DEVS in the outer save object, then it's not modded anymore, and will likely not affect the bug."
+
+sc.CrossCode.inject({
+ getErrorData: function(data) {
+  this.parent(data);
+  a["ALERT_TO_CC_DEVS"] = ccDeveloperAlert;
  }
 });
 
@@ -29,13 +36,16 @@ rui["RIGameAddon"] = ig.GameAddon.extend({
   ig.storage.register(this);
  },
  onStorageSave: function(a) {
-  a["ALERT_TO_CC_DEVS"] = "RaptureUI in use. The game is absolutely definitely modded.";
+  a["ALERT_TO_CC_DEVS"] = ccDeveloperAlert;
+  // This is buried deeper in, and 'taints' the save
+  a["vars"]["storage"]["ALERT_TO_CC_DEVS"] = ccDeveloperAlertLongterm;
  }
 });
 ig.addGameAddon(function() {
  return rui.riGameAddon = new rui.RIGameAddon();
 });
-ig.LANG_EDIT_SUBMIT_URL += "?modded=raptureui";
+if (ig.LANG_EDIT_SUBMIT_URL)
+ ig.LANG_EDIT_SUBMIT_URL += "?modded=raptureui";
 
 // --- MODS GUI ---
 rui["showRestartWarning"] = function () {

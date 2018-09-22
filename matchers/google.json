@@ -3,14 +3,16 @@
  "snippets" : [
   [
    ["googleThrow", "googleUndefined", "googleTrue", "googleNull", "googleFalse", "googleNewIdentity", "googleNewNop", "googleNewSetter", "googleNewGetter", "googleNewFinal"],
-   ["e", "g", "h", "q", "x", "G", "I", "K", "T", "Z"],
-   ["function e($$){throw $$;}var g=void 0,h=!0,q=null,x=!1;",
-    "function G(){return function($$){return $$}}",
-    "function I(){return function(){}}",
-    "function K($$){return function($$){this[$$]=$$}}",
-    "function T($$){return function(){return this[$$]}}",
-    "function Z($$){return function(){return $$}}"]
+   ["f", "g", "j", "s", "w", "ba", "E", "L", "M", "R"],
+   ["function f($$){throw $$;}var g=void 0,j=!0,s=null,w=!1;",
+    "function ba(){return function($$){return $$}}",
+    "function E(){return function(){}}",
+    "function L($$){return function($$){this[$$]=$$}}",
+    "function M($$){return function(){return this[$$]}}",
+    "function R($$){return function(){return $$}}"],
+    "0.7.0", "Google Matchers (Global Namespace, reuses the matcher framework for simplicity)"
   ]
  ],
- "deleteThese" : []
+ "deleteThese" : [],
+ "lostSymbols" : []
 }

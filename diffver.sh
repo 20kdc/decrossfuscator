@@ -7,11 +7,25 @@
 
 # Compmap shows missing symbols.
 # Expects 'root' folder as first arg, but will substitute '.' otherwise.
-# Expects the 'target' CrossCode version as second arg, but defaults to target
+# Expects the 'source' CrossCode version as second arg, but defaults to steam/0.7.0
+# Expects the 'target' CrossCode version as third arg, but defaults to target
+# Expects a matcher library
 
 ROOTDIR=${1:-.}
-TVERSION=${2:-target}
+SVERSION=${2:-source}
+TVERSION=${3:-target}
 
+SJMF=$ROOTDIR/versions/$SVERSION
 TJMF=$ROOTDIR/versions/$TVERSION
 
-node checkmap.js $TJMF/deobf.map
+SJSF=$SJMF/subdir/assets/js/game.compiled.js
+TJSF=$TJMF/subdir/assets/js/game.compiled.js
+
+BASIS=$ROOTDIR/workfiles
+
+node deobf.js $SJSF $SJMF/deobf.map deobf-diff > $BASIS/diff1.js
+node deobf.js $TJSF $TJMF/deobf.map deobf-diff > $BASIS/diff2.js
+js-beautify $BASIS/diff1.js > $BASIS/diff1.b.js
+js-beautify $BASIS/diff2.js > $BASIS/diff2.b.js
+diff -u $BASIS/diff1.b.js $BASIS/diff2.b.js > $BASIS/diff.diff
+less $BASIS/diff.diff

@@ -3,23 +3,23 @@
 # To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 # You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 
+NOTE: versions/source should ideally be a symlink to versions/steam/0.7.0
 NOTE: versions/target should ideally be a symlink to your target version of choice.
 This means you can just run a command without args and get the intended effect in all cases.
-The only other 'special version' is 'versions/steam/0.7.0'.
+The only other 'special version' is 'versions/steam/0.7.0', which is the default for rosetta.sh as it's the only one we have a .min.js for
 
-0.9.8-7
-
-rosetta.sh [ROOT:.] [VERSION:target] : makes a deobf.map for a version based on official developer pre-obfuscated '.min.js'
-forwardmap.sh [ROOT:.] [SRCVER:steam/0.7.0] [DSTVER:target] : makes a deobf-forward.map (that's copied to deobf.map) for a new version's JS based on an old version's map & obf. JS
-forwardmap-2.sh [ROOT:.] [SRCVER:steam/0.7.0] [DSTVER:target] : Tries to use deobf-forward.map to find more matches for deobf-forward.map, copies to deobf.map
+rosetta.sh [ROOT:.] [VERSION:steam/0.7.0] : makes a deobf.map for a version based on official developer pre-obfuscated '.min.js'
+forwardmap.sh [ROOT:.] [SRCVER:source] [DSTVER:target] : makes a deobf-forward.map (that's copied to deobf.map) for a new version's JS based on an old version's map & obf. JS
+forwardmap-2.sh [ROOT:.] [SRCVER:source] [DSTVER:target] : Tries to use deobf-forward.map to find more matches for deobf-forward.map, copies to deobf.map
 mergemap.sh [ROOT:.] [VERSION:target] [MATCHERS:matchers/fixup.json] : starts with deobf-forward.map, adds matchers, overwrites deobf.map
+compmap.sh [ROOT:.] [SRCVER:source] [VERSION:target] [MATCHERS:matchers/fixup.json] : starts with deobf-forward.map, adds matchers, overwrites deobf.map
 deobf.sh [ROOT:.] [VERSION:target] : creates deobfuscated JS for a version
 and `node reobf.js <js> <map>` outputs obfuscated JS,
  this is useful reference source for a modloader developer
 
-workbench/ : Electron application for running game deobfuscated
-lib/ : core libs
+lib/ : core libs + Rapture src.
 lib/rosetta-global-data.js : global data for Rosetta system
+mods/ : Rapture workspace
 matchers/ : matcher libraries
 matchers/google.json : googlefuncs
 matchers/fixup.json : fixes to deobf.map

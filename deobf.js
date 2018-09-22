@@ -20,13 +20,18 @@ var mapping = fs.readFileSync(process.argv[3], "utf8");
 // avoids deobfuscating something that shouldn't be deobfuscatable
 // used to make the turnaround time on quick fixes to the obf blacklist a lot faster
 var safe = false;
+// if a valid propkey isn't deobfuscated, stringify it for safety
+// note that this doesn't actually work at the moment.
+var addExplicitStrings = false;
+var unresolvedSymbolsAreWildcards = false;
 
 var matchGoogle = null;
 var GOOGLE_CALLS_SRC = null;
 var GOOGLE_CALLS_DST = null;
 
-if ((process.argv[4] == "deobf") || (process.argv[4] == "deobf-unsafe")) {
- safe = process.argv[4] == "deobf";
+if ((process.argv[4] == "deobf") || (process.argv[4] == "deobf-unsafe") || (process.argv[4] == "deobf-diff")) {
+ safe = process.argv[4] != "deobf-unsafe";
+ unresolvedSymbolsAreWildcards = process.argv[4] == "deobf-diff";
  // Standard deobfuscation mode
  mapping = mapper.loadObfToDeobf(mapping);
 
@@ -50,16 +55,22 @@ if ((process.argv[4] == "deobf") || (process.argv[4] == "deobf-unsafe")) {
  mapping = new Map();
 }
 
-function mapSrcDst(str) {
- // Rosetta global data can be updated to blacklist OBFs without rerunning the forwardporter
+function doNotMap(str) {
  if (safe) {
   if (str.length > rosettaGlobals.maxValidObfLen)
-   return null;
+   return true;
   if (rosettaGlobals.obfBlacklist.indexOf(str) != -1)
-   return null;
-  if (mapping.has(str))
-   return mapping.get(str);
+   return true;
  }
+ if (lexer.words.all.indexOf(str) != -1)
+  return true;
+ return false;
+}
+
+function mapSrcDst(str) {
+ // Rosetta global data can be updated to blacklist OBFs without rerunning the forwardporter
+ if (doNotMap(str))
+  return null;
  if (mapping.has(str))
   return mapping.get(str);
  return null;
@@ -67,10 +78,23 @@ function mapSrcDst(str) {
 
 for (var i = 0; i < tkns.length; i++) {
  if (tkns[i][0] == "id") {
-  if (lexer.propKey(tkns, i)) {
+  var resolved = false;
+  var propKey = lexer.propKey(tkns, i);
+  if (propKey) {
    var deobf = mapSrcDst(tkns[i][1]);
-   if (deobf != null)
+   if (deobf != null) {
     tkns[i][1] = deobf;
+    resolved = true;
+   } else if (addExplicitStrings) {
+    // Object propkey that isn't being translated should be ""'d for safety
+    tkns[i][0] = "str";
+    tkns[i][1] = "\"" + tkns[i][1] + "\"";
+    if (propKey == lexer.PK.INDEX) {
+     // ."blah" isn't valid, translate to ["blah"]
+     tkns[i - 1][1] = "[";
+     tkns.splice(i + 1, 0, ["char", "]"]);
+    }
+   }
   } else if (matchGoogle != null) {
    // DEOBF ONLY IN PRACTICE, IF FIXING THAT PLEASE PAY ATTENTION:
    // Really matchGoogle.map.get & whatever should just be in an array:
@@ -97,9 +121,14 @@ for (var i = 0; i < tkns.length; i++) {
    // NOTE: The googlecall stuff only applies to globals.
    //       The OBFs of these are NEVER, EVER, EVER used as local variables, so it's safe.
    var gcallIndex = GOOGLE_CALLS_SRC.indexOf(tkns[i][1]);
-   if (gcallIndex != -1) 
+   if (gcallIndex != -1) {
     tkns[i][1] = GOOGLE_CALLS_DST[gcallIndex];
+    resolved = true;
+   }
   }
+  if (unresolvedSymbolsAreWildcards && !resolved)
+   if (!doNotMap(tkns[i][1]))
+    tkns[i][1] = "$$";
  }
 }
 
