@@ -1,6 +1,7 @@
 backup-*.zip
 rapture-package.zip
 matchers/fixup.json
+matchers/guess.json
 versions
 workfiles
 film-studio
