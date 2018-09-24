@@ -5,7 +5,7 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-// 2:oldJS 3:oldMAP 4:newJS 5:lastNewMAP 6:mode
+// 2:oldJS 3:oldMAP 4:newJS 5:lastNewMAP 6:lostsym-exclusion-matcher 7:mode
 
 var fs = require("fs");
 var process = require("process");
@@ -13,11 +13,15 @@ var child_process = require("child_process");
 
 var lexer = require("./lib/lexer");
 var mapper = require("./lib/mapper");
+var matcher = require("./lib/matcher");
 
 // old .compiled.js
 var oldTokens = lexer.strip(lexer.lexString(fs.readFileSync(process.argv[2], "utf8")));
 
 var realMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[5], "utf8"));
+
+var exclusionMatcher = new matcher.Matcher();
+exclusionMatcher.loadProfileFile(process.argv[6]);
 
 console.error("forwardmap.js: " + oldTokens.length + " tokens to chew through");
 
@@ -27,7 +31,7 @@ var candidateMap = new Map();
 function processCore(idx, len, st) {
  processCount++;
  console.error("Activating " + st);
- var proc = child_process.spawn(process.argv[0], ["forwardmap-worker.js", process.argv[2], idx.toString(), (idx + len).toString(), process.argv[3], process.argv[4], process.argv[5], st, process.argv[6]], {
+ var proc = child_process.spawn(process.argv[0], ["forwardmap-worker.js", process.argv[2], idx.toString(), (idx + len).toString(), process.argv[3], process.argv[4], process.argv[5], st, process.argv[7]], {
   stdio: "inherit"
  });
  proc.on("close", function (ex) {
@@ -41,7 +45,7 @@ function processCore(idx, len, st) {
   if (processCount == 0) {
    console.error("No workers remain, finalizing");
    // Emit all the things and shut down
-   mapper.candidateMapMergeIntoRealMap(realMap, candidateMap);
+   mapper.candidateMapMergeIntoRealMap(realMap, candidateMap, exclusionMatcher.lostSymbols);
    mapper.logDeobfToObf(realMap);
    process.exit(0);
   } else if (processCount == 1) {

@@ -39,8 +39,11 @@ for (var p = newMap.keys(), n = null; (n = p.next()) && !n.done;)
 
 console.log("-- Errors & Subtractions --")
 
-for (var p = newMap.keys(), n = null; (n = p.next()) && !n.done;)
+for (var p = newMap.keys(), n = null; (n = p.next()) && !n.done;) {
  checkId(newMap.get(n.value), "Obf for " + n.value + ": ");
+ if (mainMatcher.lostSymbols.indexOf(n.value) != -1)
+  console.log("Lost symbol " + n.value + " present");
+}
 
 for (var p = oldMap.keys(), n = null; (n = p.next()) && !n.done;)
  if (!newMap.has(n.value))
