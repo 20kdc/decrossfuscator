@@ -5,10 +5,9 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-window["mods"]["raptureui"] = {};
-var rui = window["mods"]["raptureui"];
-rui.titleButtons = [];
-rui.titleButtonCallbacks = [];
+var rui = window["mods"]["raptureui"] = {};
+rui["titleButtons"] = [];
+rui["titleButtonCallbacks"] = [];
 
 // --- ACCIDENT PREVENTION ---
 // I'm not expecting a biscuit for this, but... - 20kdc
@@ -50,8 +49,22 @@ if (ig.LANG_EDIT_SUBMIT_URL)
 // --- MODS GUI ---
 rui["showRestartWarning"] = function () {
  sc.Dialogs.showInfoDialog("Please note that to apply these changes, you will have to restart the game.");
- rui.showRestartWarning = function () {};
+ rui["showRestartWarning"] = function () {};
 };
+rui["titleButtonGui"] = null;
+rui["titleLoseControl"] = function () {
+ // Get the mods panel onscreen & release control
+ ig.bgm.pause("SLOW");
+ ig.interact.removeEntry(rui["titleButtonGui"].buttonInteract);
+ rui["titleButtonGui"].background.doStateTransition("DEFAULT");
+};
+rui["titleTakeControl"] = function () {
+ // Get the mods panel onscreen & release control
+ rui["titleButtonGui"].background.doStateTransition("HIDDEN");
+ ig.interact.addEntry(rui["titleButtonGui"].buttonInteract);
+ ig.bgm.resume("SLOW");
+};
+
 // Ok, so it's clear none of the existing GUIs fit 'big button containing long description'
 //  so let's just make one up!
 rui["ModButtonGui"] = sc.ButtonGui.extend({
@@ -85,7 +98,7 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
   if (this.modEnabled) {
    rapture["config"]["disable-" + this.modId] = true;
   } else {
-   delete rapture["config"]["disable-" + this.modId];
+   rapture["config"]["disable-" + this.modId] = false;
   }
   rapture["saveConfig"]();
   this.modEnabled = !this.modEnabled;
@@ -106,112 +119,14 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
 });
 rui["ModsGui"] = ig.GuiElementBase.extend({
  "raptureuiButtons": null,
- init: function (btns) {
+ init: function (bOfs, bAWidth) {
   this.parent();
   this.setSize(ig.system.width, ig.system.height);
   // interact/group stuff
   this.interact = new ig.ButtonInteractEntry();
   this.group = new sc.ButtonGroup();
   this.interact.pushButtonGroup(this.group);
-  for (var i = 0; i < btns.length; i++) {
-   this.group.addFocusGui(btns[i], i, 0);
-  }
-  this.raptureuiButtons = btns;
-  // and now for...
-  var buttonWidth = Math.floor((ig.system.width - 12) / 2);
-  this.listBox = new sc.ButtonListBox(0, 0, 20, 2, 0, buttonWidth);
-  var border = 4;
-  this.listBox.setPos(border, 36 + border); // More magic numbers. I should stop using these, but how to replace them?
-  this.listBox.setSize(ig.system.width - (border * 2), (ig.system.height - 36) - ((border * 2) + 8));
-  this.listBox.setButtonGroup(this.group);
-  this.addChildGui(this.listBox);
-  // Ok, now add content
-  for (var i = 0; i < rapture["knownMods"].length; i++) {
-   var bt = new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth);
-   this.listBox.addButton(bt, true);
-   this.group.insertFocusGui(bt, i % 2, 1 + Math.floor(i / 2));
-  }
- },
- "takeControl": function () {
-  this.doStateTransition("DEFAULT");
-  for (var i = 0; i < this["raptureuiButtons"].length; i++) {
-   this["raptureuiButtons"][i].doStateTransition("DEFAULT");
-  }
-  ig.interact.addEntry(this.interact);
- },
- "loseControl": function () {
-  ig.interact.removeEntry(this.interact);
-  this.doStateTransition("HIDDEN");
-  for (var i = 0; i < this["raptureuiButtons"].length; i++) {
-   this["raptureuiButtons"][i].doStateTransition("HIDDEN");
-  }
- }
-});
-// --- TITLE SCREEN GUI ---
-sc.TitleScreenButtonGui.inject({
- "raptureuiButtons": null,
- "raptureuiMods": null,
- "raptureuiFirstRun": rapture["firstRun"],
- init: function () {
-  this.parent();
 
-  // Where in the TitleScreenButtons children-array to put the buttons.
-  // Can't be last because it'll get in front of stuff like changelog -
-  //  stuff seems to work fine if it's first?
-  // Increment after each use to keep ordering
-  var insertPoint = 0;
-
-  var bWidth = sc.BUTTON_DEFAULT_WIDTH; // ^.^;
-  var bAWidth = Math.floor(bWidth / 3);
-  var bBWidth = bWidth - bAWidth;
-  var bOfs = 12;
-
-  var brand = new sc.TextGui("Rapture " + rapture.version + " installed, " + rapture.enabledMods.length + " mods.", {
-   font: sc.fontsystem.smallFont
-  });
-  brand.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  brand.setPos(bOfs, 0); // hmm.
-  brand.hook.transitions = {};
-  brand.hook.transitions["DEFAULT"] = {
-   state: {},
-   time: 0.2,
-   timeFunction: KEY_SPLINES.EASE
-  };
-  brand.hook.transitions["HIDDEN"] = {
-   state: {
-    offsetY: -bOfs
-   },
-   time: 0.2,
-   timeFunction: KEY_SPLINES.LINEAR
-  };
-  brand.doStateTransition("HIDDEN", true);
-  this.insertChildGui(brand, insertPoint++);
-
-  var bMods = new sc.ButtonGui("Mods", bAWidth);
-  var bVani = new sc.ButtonGui("Run Vanilla", bBWidth);
-  bMods.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  bMods.setPos(bOfs, bOfs);
-  bVani.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  bVani.setPos(bOfs + bAWidth, bOfs);
-  bVani.onButtonPress = function() {
-   this.changelogGui.clearLogs();
-   ig.bgm.clear("MEDIUM_OUT");
-   ig.interact.removeEntry(this.buttonInteract);
-   // Here's how the system seems to work for new games:
-   // 1. Model is told we want to start the game
-   // 2. A massive notification goes out saying that we're changing state (modelChanged @ TitleScreenGui)
-   // 3. All the UI goes and hides itself
-   // 4. Time passes
-   // 5. transitionEnded is called and starts the game
-   // So in the end trying to start the game and hooking immediately has...
-   //  about the same effect as actually trying to follow this system (and thus defining a new constant/etc.)
-   ig.game.start(sc.START_MODE.STORY, 1);
-   ig.game.transitionEnded = rapture.runVanilla;
-  }.bind(this);
-  this["raptureuiButtons"] = [bMods, bVani];
-
-  // Mods GUI hide/show is handled here for simplicity.
-  // bModsBack and modsGui need to be placed at the front
   var bModsBack = new sc.ButtonGui("Back", bAWidth);
   bModsBack.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bModsBack.setPos(bOfs, bOfs);
@@ -224,82 +139,33 @@ sc.TitleScreenButtonGui.inject({
   bModsInsp.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bModsInsp.setPos(bOfs + bAWidth + bModsUninstall.hook.size.x, bOfs);
 
-  var modsGuiTopButtons = [bModsBack, bModsUninstall, bModsInsp];
+  this.group.addFocusGui(bModsBack, 0, 0);
+  this.addChildGui(bModsBack);
+  this.group.addFocusGui(bModsUninstall, 1, 0);
+  this.addChildGui(bModsUninstall);
+  this.group.addFocusGui(bModsInsp, 2, 0);
+  this.addChildGui(bModsInsp);
 
-  // Everything from here on should treat the buttons as a group.
-  // Transition Setup...
-  var modsGuiTopTransition = {
-   "DEFAULT": {
-    state: {},
-    time: 0.2,
-    timeFunction: KEY_SPLINES.EASE
-   },
-   "HIDDEN": {
-    state: {
-     offsetY: -(bOfs + 24)
-    },
-    time: 0.2,
-    timeFunction: KEY_SPLINES.LINEAR
-   }
-  };
-  for (var i = 0; i < modsGuiTopButtons.length; i++) {
-   modsGuiTopButtons[i].hook.transitions = modsGuiTopTransition;
-  }
-
-  // Mods GUI
-  var modsGui = new rui.ModsGui(modsGuiTopButtons);
-  modsGui.hook.transitions = {};
-  modsGui.hook.transitions["DEFAULT"] = {
-   state: {},
-   time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
-  };
-  modsGui.hook.transitions["HIDDEN"] = {
-   state: {
-    offsetX: ig.system.width
-   },
-   time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
-  };
-
-  modsGui.doStateTransition("HIDDEN", true);
-
-  // Note that 'bModsBack' must be over 'modsGui'.
-  this.addChildGui(modsGui);
-  for (var i = 0; i < modsGuiTopButtons.length; i++) {
-   modsGuiTopButtons[i].doStateTransition("HIDDEN", true);
-   this.addChildGui(modsGuiTopButtons[i]);
-  }
-  // Mods GUI Top Button Event Handlers
-  bMods.onButtonPress = function() {
-   // Get the mods panel onscreen & release control
-   ig.bgm.pause("SLOW");
-   ig.interact.removeEntry(this.buttonInteract);
-
-   this.background.doStateTransition("DEFAULT");
-   modsGui["takeControl"]();
-  }.bind(this);
   bModsBack.onButtonPress = function() {
    // Get the mods panel offscreen & gain control
-   modsGui["loseControl"]();
-   this.background.doStateTransition("HIDDEN");
-
-   ig.interact.addEntry(this.buttonInteract);
-   ig.bgm.resume("SLOW");
+   this["loseControl"]();
+   rui["titleTakeControl"]();
   }.bind(this);
+
   bModsUninstall.onButtonPress = function() {
    sc.Dialogs.showYesNoDialog("This will delete Rapture files and try to restore the game to an unmodded state. Are you sure you want to do this?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
     if (r.data == 0) {
      // Go to title screen and then out of title screen
      modsGui["loseControl"]();
-     this.background.doStateTransition("HIDDEN");
+     rui["titleButtonGui"].background.doStateTransition("HIDDEN");
 
-     this.changelogGui.clearLogs();
+     rui["titleButtonGui"].changelogGui.clearLogs();
      ig.game.start(sc.START_MODE.STORY, 1);
      ig.game.transitionEnded = rapture.uninstall;
     }
    }.bind(this));
   }.bind(this);
+
   bModsInsp.onButtonPress = function() {
    var nwWindow = require('nw.gui').Window.get();
    nwWindow.showDevTools();
@@ -330,12 +196,128 @@ sc.TitleScreenButtonGui.inject({
     }
    }.bind(this));
   }.bind(this);
+
+  // and now for...
+  var buttonWidth = Math.floor((ig.system.width - 12) / 2);
+  this.listBox = new sc.ButtonListBox(0, 0, 20, 2, 0, buttonWidth);
+  var border = 4;
+  this.listBox.setPos(border, 36 + border); // More magic numbers. I should stop using these, but how to replace them?
+  this.listBox.setSize(ig.system.width - (border * 2), (ig.system.height - 36) - ((border * 2) + 8));
+  this.listBox.setButtonGroup(this.group);
+  this.addChildGui(this.listBox);
+  // Ok, now add content
+  for (var i = 0; i < rapture["knownMods"].length; i++) {
+   var bt = new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth);
+   this.listBox.addButton(bt, true);
+   this.group.insertFocusGui(bt, i % 2, 1 + Math.floor(i / 2));
+  }
+ },
+ "takeControl": function () {
+  this.doStateTransition("DEFAULT");
+  ig.interact.addEntry(this.interact);
+ },
+ "loseControl": function () {
+  ig.interact.removeEntry(this.interact);
+  this.doStateTransition("HIDDEN");
+ }
+});
+// --- TITLE SCREEN GUI ---
+sc.TitleScreenButtonGui.inject({
+ "raptureuiButtons": null,
+ "raptureuiMods": null,
+ "raptureuiFirstRun": rapture["firstRun"],
+ init: function () {
+  this.parent();
+  rui["titleButtonGui"] = this;
+
+  // Where in the TitleScreenButtons children-array to put the buttons.
+  // Can't be last because it'll get in front of stuff like changelog -
+  //  stuff seems to work fine if it's first?
+  // Increment after each use to keep ordering
+  var insertPoint = 0;
+
+  var bWidth = sc.BUTTON_DEFAULT_WIDTH; // ^.^;
+  var bAWidth = Math.floor(bWidth / 3);
+  var bBWidth = bWidth - bAWidth;
+  var bOfs = 12;
+  var bVerticalTracker = 26;
+
+  var brand = new sc.TextGui("Rapture " + rapture.version + " installed, " + rapture.enabledMods.length + " mods.", {
+   font: sc.fontsystem.smallFont
+  });
+  brand.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  brand.setPos(bOfs, bVerticalTracker); // hmm.
+  bVerticalTracker += bOfs;
+  brand.hook.transitions = {};
+  brand.hook.transitions["DEFAULT"] = {
+   state: {},
+   time: 0.2,
+   timeFunction: KEY_SPLINES.EASE
+  };
+  brand.hook.transitions["HIDDEN"] = {
+   state: {
+    offsetY: -bVerticalTracker
+   },
+   time: 0.2,
+   timeFunction: KEY_SPLINES.LINEAR
+  };
+  brand.doStateTransition("HIDDEN", true);
+  this.insertChildGui(brand, insertPoint++);
+
+  var bMods = new sc.ButtonGui("Mods", bAWidth);
+  var bVani = new sc.ButtonGui("Run Vanilla", bBWidth);
+  bMods.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bMods.setPos(bOfs, bVerticalTracker);
+  bVani.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
+  bVani.setPos(bOfs + bAWidth, bVerticalTracker);
+  bVerticalTracker += 24;
+  bVani.onButtonPress = function() {
+   this.changelogGui.clearLogs();
+   ig.bgm.clear("MEDIUM_OUT");
+   ig.interact.removeEntry(this.buttonInteract);
+   // Here's how the system seems to work for new games:
+   // 1. Model is told we want to start the game
+   // 2. A massive notification goes out saying that we're changing state (modelChanged @ TitleScreenGui)
+   // 3. All the UI goes and hides itself
+   // 4. Time passes
+   // 5. transitionEnded is called and starts the game
+   // So in the end trying to start the game and hooking immediately has...
+   //  about the same effect as actually trying to follow this system (and thus defining a new constant/etc.)
+   ig.game.start(sc.START_MODE.STORY, 1);
+   ig.game.transitionEnded = rapture.runVanilla;
+  }.bind(this);
+  this["raptureuiButtons"] = [bMods, bVani];
+
+  // Mods GUI
+  var modsGui = new rui.ModsGui(bOfs, bAWidth);
+  modsGui.hook.transitions = {};
+  modsGui.hook.transitions["DEFAULT"] = {
+   state: {},
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+  modsGui.hook.transitions["HIDDEN"] = {
+   state: {
+    offsetY: ig.system.height
+   },
+   time: 0.5,
+   timeFunction: KEY_SPLINES.EASE
+  };
+  modsGui.doStateTransition("HIDDEN", true);
+
+  // Mods GUI Top Button Event Handlers
+  bMods.onButtonPress = function() {
+   // let's just hope this doesn't get stacked up
+   this.addChildGui(modsGui);
+   rui["titleLoseControl"]();
+   modsGui["takeControl"]();
+  }.bind(this);
   // ----
   // save some trouble and let mods inject their own buttons if raptureui is in use
   // it'll mean it can be listbox'd later
-  for (var i = 0; i < mods.raptureui.titleButtons.length; i++) {
-   var b = new sc.ButtonGui(mods.raptureui.titleButtons[i], bWidth);
-   b.onButtonPress = mods.raptureui.titleButtonCallbacks[i];
+  for (var i = 0; i < rui["titleButtons"].length; i++) {
+   var b = new sc.ButtonGui(rui["titleButtons"][i], bWidth);
+   b.onButtonPress = rui["titleButtonCallbacks"][i];
    this["raptureuiButtons"].push(b);
   }
   var bRow = 6; // EEevil
@@ -345,8 +327,9 @@ sc.TitleScreenButtonGui.inject({
    var bCol = 0;
    if (i >= 2) {
     b.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-    b.setPos(bOfs, bOfs + ((i - 1) * 28)); // I wasn't able to find the variable that they use. Somehow.
+    b.setPos(bOfs, bVerticalTracker); // I wasn't able to find the variable that they use. Somehow.
     bRow++; // Do it here so button 2 is moved down from buttons 0/1
+    bVerticalTracker += 24;
    } else {
     bCol = i;
    }
