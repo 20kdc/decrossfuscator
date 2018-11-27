@@ -1,5 +1,0 @@
-{
- "description": "Treats countdown timers (such as SR Trial Of Insight) as puzzles for the purposes of the time assist",
- "disableByDefault": true,
- "dependencies": []
-}
