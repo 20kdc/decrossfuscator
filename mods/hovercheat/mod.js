@@ -5,19 +5,14 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-sc.OPTIONS_DEFINITION["keys-hover"] = {
- type: "CONTROLS",
- init: {key1: ig.KEY.P},
- cat: sc.OPTION_CATEGORY.CONTROLS
-};
+// LangEdit binds itself manually with no configurability, making it unaffected by some big issues with 'just registering' keys these days
+window["mods"]["raptureui"]["registerKey"]("hover", "Hovercheat", ig.KEY.P);
 
 (function () {
 
  var HCGameAddon = ig.GameAddon.extend({
   init: function () {
-   // Ideally, a language file would be loaded here. Need to do this at some point.
-   ig.lang.labels["sc"]["gui"]["menu"]["option"]["keys-hover"] = "Hovercheat";
-   ig.input.bind(ig.KEY.P, "hover");
+   this.parent("Hovercheat");
   },
   onPreUpdate: function () {
    if (ig.input.pressed("hover"))
