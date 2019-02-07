@@ -9,6 +9,11 @@
 // Thus registerKey does all the required work
 window["mods"]["raptureui"]["registerKey"]("emileatasPlay", "TAS Play", ig.KEY.ADD);
 window["mods"]["raptureui"]["registerKey"]("emileatasAdvframe", "TAS Advance Frame", ig.KEY.SUBSTRACT);
+window["mods"]["raptureui"]["registerKey"]("emileatasPtcs", "TAS Play To Cutscene/End", ig.KEY.NUMPAD_9);
+window["mods"]["raptureui"]["registerKey"]("emileatasPtdr", "TAS Play To Dash End/Fill", ig.KEY.NUMPAD_8);
+window["mods"]["raptureui"]["registerKey"]("emileatasOverlay", "TAS Toggle Overlay", ig.KEY.NUMPAD_5);
+window["mods"]["raptureui"]["registerKey"]("emileatasSpdD", "Playback Slowdown", ig.KEY.NUMPAD_4);
+window["mods"]["raptureui"]["registerKey"]("emileatasSpdU", "Playback Speedup", ig.KEY.NUMPAD_6);
 window["mods"]["raptureui"]["registerKey"]("emileatasInput1", "TAS True Input", ig.KEY.NUMPAD_0);
 window["mods"]["raptureui"]["registerKey"]("emileatasInput2", "TAS Edited Input", ig.KEY.NUMPAD_1);
 window["mods"]["raptureui"]["registerKey"]("emileatasInput3", "TAS File Input", ig.KEY.NUMPAD_2);
@@ -21,19 +26,28 @@ window["mods"]["eltas"] = {};
 window["mods"]["eltas"]["TASCore"] = ig.Class.extend({
  "workingMock": {"state": {}, "mouseX": 0, "mouseY": 0},
  "lastMock": {"state": {}, "mouseX": 0, "mouseY": 0},
- "frameAdvance": false,
+ "timelineState": "tsPlay",
+ // tsPlay / tsToCutscene / tsToCutsceneEnd / tsToDashRefill / tsToDashExhaust
+ // NOTE! tsToCutsceneEnd actually ends a frame 'behind' due to weirdness; player gains control a frame 'early'.
+ // Have your keys buffered.
  "inputSrc": 0,
  "writer": null,
  "reader": null,
  "readerTimer": 0,
  "hasSavedThisFrame": false,
+ "overlay": true,
  "preRun": function () {
+  if (ig.input.pressed("emileatasSpdD"))
+   ig.system["emileatasSuperspeed"] = Math.max(1, ig.system["emileatasSuperspeed"] - 1);
+  if (ig.input.pressed("emileatasSpdU"))
+   ig.system["emileatasSuperspeed"]++;
   // Need to modularize this, but how?
   if (ig.input.pressed("emileatasWriterToggle")) {
    if (this["writer"] != null) {
     this["writer"] = null;
    } else {
     this["writer"] = [];
+    ig.Timer["emileatasCheckpoint"]();
    }
   }
   if (ig.input.pressed("emileatasWriterConfirm")) {
@@ -43,6 +57,21 @@ window["mods"]["eltas"]["TASCore"] = ig.Class.extend({
    fs.writeFileSync("eltasBuffer.json", c, "utf8");
    fs.writeFileSync("eltasBuffer" + (new Date().getTime()) + ".json", c, "utf8");
    this["hasSavedThisFrame"] = true;
+  }
+
+  if (ig.input.pressed("emileatasOverlay"))
+   this["overlay"] = !this["overlay"];
+
+  if (ig.input.pressed("emileatasPlay"))
+   this["timelineState"] = "tsPlay";
+  if (ig.input.pressed("emileatasPtcs"))
+   this["timelineState"] = sc.model.isCutscene() ? "tsToCutsceneEnd" : "tsToCutscene";
+  if (ig.input.pressed("emileatasPtdr")) {
+   this["timelineState"] = "tsToDashRefill";
+   // If told to before exhaustion, assume we're trying to exhaust dashing.
+   if (ig.game.playerEntity)
+    if (ig.game.playerEntity.dashCount < ig.game.playerEntity.maxDash)
+     this["timelineState"] = "tsToDashExhaust";
   }
   // --- Input Source Selection ---
   if (ig.input.pressed("emileatasInput1")) {
@@ -121,14 +150,34 @@ window["mods"]["eltas"]["TASCore"] = ig.Class.extend({
     this["workingMock"] = this["copyMock"](this["reader"][0]);
   }
   // --- Frame Control ---
-  if (ig.input.pressed("emileatasPlay"))
-   this["frameAdvance"] = false;
-  if (this["frameAdvance"]) {
+
+  if (this["timelineState"] == "tsToCutscene") {
+   if (sc.model.isCutscene())
+    this["timelineState"] = null;
+  } else if (this["timelineState"] == "tsToCutsceneEnd") {
+   if (!sc.model.isCutscene())
+    this["timelineState"] = null;
+  } else if ((this["timelineState"] == "tsToDashRefill")) {
+   if (sc.model.isCutscene())
+    this["timelineState"] = null;
+   if (ig.game.playerEntity)
+    if (ig.game.playerEntity.dashCount == 0)
+     this["timelineState"] = null;
+  } else if ((this["timelineState"] == "tsToDashExhaust")) {
+   // Cutscenes should interrupt as skipping them takes priority.
+   if (sc.model.isCutscene())
+    this["timelineState"] = null;
+   if (ig.game.playerEntity)
+    if (ig.game.playerEntity.dashCount == ig.game.playerEntity.maxDash)
+     this["timelineState"] = null;
+  }
+
+  if (this["timelineState"] == null) {
    if (!ig.input.pressed("emileatasAdvframe"))
     return null;
   } else {
    if (ig.input.pressed("emileatasAdvframe")) {
-    this["frameAdvance"] = true;
+    this["timelineState"] = null;
     return null;
    }
   }
@@ -157,32 +206,54 @@ window["mods"]["eltas"]["TASCore"] = ig.Class.extend({
   return this["lastMock"];
  },
  "postRun": function () {
-  var status = sc.model.currentState + ";" + sc.model.currentSubState;
-  if (this["reader"] != null) {
-   if (this["writer"] != null) {
-    status += "~" + this["readerTimer"] + "f";
+  if (this["overlay"]) {
+   var status = "";
+   if (ig.game.playerEntity) {
+    status += ig.game.playerEntity.state;
+    status += "d";
+    status += ig.game.playerEntity.maxDash - ig.game.playerEntity.dashCount;
+    if (ig.game.playerEntity.charging.time >= 0) {
+     status += "R" + ig.game.playerEntity.charging.time + ":";
+    } else if (ig.game.playerEntity.gui.crosshair.isThrowCharged()) {
+     status += "C";
+    } else {
+     status += "G";
+    }
    } else {
-    status += "R" + this["readerTimer"] + "f";
+    status += "O";
    }
-  } else {
-   if (this["writer"] != null) {
-    status += "W";
+   status += sc.model.currentState + ";" + sc.model.currentSubState;
+   // -- End of game status, start TAS status --
+   if (this["reader"] != null) {
+    if (this["writer"] != null) {
+     status += "~" + this["readerTimer"] + "f";
+    } else {
+     status += "R" + this["readerTimer"] + "f";
+    }
    } else {
-    status += "I";
+    if (this["writer"] != null) {
+     status += "W";
+    } else {
+     status += "I";
+    }
    }
-  }
-  if (this["hasSavedThisFrame"])
-   status += "!";
-  status += this["inputSrc"];
-  for (k in this["workingMock"]["state"])
-   status += k + this["workingMock"]["state"][k];
+   if (this["hasSavedThisFrame"])
+    status += "!";
+   status += this["inputSrc"];
+   for (k in this["workingMock"]["state"])
+    status += k + this["workingMock"]["state"][k];
 
-  this["drawOverlay"](status);
+   this["drawOverlay"](status);
+  }
  },
  "loadNewStream": function () {
   var fs = require("fs");
   this["reader"] = JSON.parse(fs.readFileSync("eltasBuffer.json", "utf8"));
   this["readerTimer"] = 0;
+  // If there's a writer, then checkpointing would upset the flow of that writer
+  // If there's no writer, nothing to worry about
+  if (this["writer"] == null)
+   ig.Timer["emileatasCheckpoint"]();
  },
  "advanceReader": function () {
   this["reader"].shift();
@@ -220,29 +291,4 @@ window["mods"]["eltas"]["TASCore"] = ig.Class.extend({
 window["mods"]["eltas"]["tascore"] = null;
 
 rapture.include("fakery.js");
-
-sc.CrossCode.inject({
- run: function () {
-  if (ig.loading) {
-   return;
-  }
-  // Safety measure to help ensure loads DO NOT EVER COUNT
-  if (sc.model.isLoading() || sc.model.isTeleport() || sc.model.isReset() || sc.model.isLoadGame() || sc.model.isNewGame()) {
-   this.parent();
-   return;
-  }
-  var tascore = window["mods"]["eltas"]["tascore"];
-  if (!tascore)
-   tascore = window["mods"]["eltas"]["tascore"] = new window["mods"]["eltas"]["TASCore"]();
-  var mock = tascore["preRun"]();
-  if (mock != null) {
-   ig.input["emileatasAccept"](mock);
-   this.parent();
-   ig.input["emileatasAccept"](null);
-  } else {
-   ig.input.clearPressed();
-  }
-  tascore["postRun"]();
- }
-});
 

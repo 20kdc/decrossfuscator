@@ -7566,7 +7566,6 @@ jumpinEnabled:kYb
 getSlotData:c4a
 loadStorage:XTb
 pushDefaultTrackType:qEb
-betweenTarget:t
 loadLevel:YIa
 loadParticleData:gE
 clearEntityClipping:nbb
@@ -7714,6 +7713,7 @@ getEnemyAiExp:UBb
 teleportData:rq
 tpChangeLevel:Fca
 tpLoadedLevel:Wfa
+lastMapName:w$a
 GAME_MODEL_STATE:Kw
 TITLE:Wla
 CUTSCENE:a2
@@ -7749,3 +7749,5 @@ isStatus:cYb
 isOptions:WXb
 isShop:$Xb
 initPushPullable:lFb
+wm:Kd
+_wm:t

@@ -615,6 +615,7 @@ intervalId:RKa
 running:Ip
 inputDom:aP
 smoothPositioning:Eva
+wm:Yc
 mapConfig:xMa
 updateCursorClass:$wa
 setDelegate:Gib
@@ -1032,6 +1033,7 @@ mapId:jy
 settings:Gi
 entityAttached:qJ
 _hideRequest:d9
+_wm:s
 _lastId:LDa
 scalableX:Jp
 scalableY:Kp
