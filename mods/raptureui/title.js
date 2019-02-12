@@ -261,7 +261,7 @@ sc.TitleScreenButtonGui.inject({
 
   var bWidth = sc.BUTTON_DEFAULT_WIDTH; // ^.^;
   var bAWidth = Math.floor(bWidth / 3);
-  var bBWidth = bWidth - bAWidth;
+  var bBWidth = bWidth - (bAWidth + 4);
   var bOfs = 12;
   // Current vertical position. Right now this assumes the performance warning is shown.
   var bVerticalTracker = 26;
@@ -294,8 +294,8 @@ sc.TitleScreenButtonGui.inject({
   bMods.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
   bMods.setPos(bOfs, bVerticalTracker);
   bVani.setAlign(ig.GUI_ALIGN.X_LEFT, ig.GUI_ALIGN.Y_TOP);
-  bVani.setPos(bOfs + bAWidth, bVerticalTracker);
-  bVerticalTracker += 24;
+  bVani.setPos(bOfs + bAWidth + 4, bVerticalTracker);
+  bVerticalTracker += 28;
   bVani.onButtonPress = function() {
    ig.bgm.clear("MEDIUM_OUT");
    ig.interact.removeEntry(this.buttonInteract);

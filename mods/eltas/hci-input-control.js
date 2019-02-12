@@ -76,9 +76,32 @@ eta["TASCore"].inject({
    this["workingMock"]["mouseX"] = ig.input.mouse.x;
    this["workingMock"]["mouseY"] = ig.input.mouse.y;
   } else if (this["inputSrc"] == eta["TAS_INPUT_SOURCE"]["EDITED"]) {
+   if (ig.input.pressed("emileatasToggleJoy")) {
+    // Note that this occurs before executeInputSrc.
+    if (!this["workingMock"]["leftStick"]) {
+     this["workingMock"]["leftStick"] = {x: 0, y: 0};
+    } else {
+     delete this["workingMock"]["leftStick"];
+    }
+   }
+   var hasJoy = this["workingMock"]["leftStick"];
+   if (hasJoy) {
+    if (ig.input.state("left"))
+     hasJoy["x"] -= 1 / 60;
+    if (ig.input.state("right"))
+     hasJoy["x"] += 1 / 60;
+    if (ig.input.state("up"))
+     hasJoy["y"] -= 1 / 60;
+    if (ig.input.state("down"))
+     hasJoy["y"] += 1 / 60;
+    hasJoy["x"] = Math.max(Math.min(hasJoy["x"], 1), -1);
+    hasJoy["y"] = Math.max(Math.min(hasJoy["y"], 1), -1);
+   }
    // Perform mock editing.
    for (var k in ig.input.presses) {
     if (k.startsWith("emileatas"))
+     continue;
+    if (hasJoy && ((k == "up") || (k == "down") || (k == "left") || (k == "right")))
      continue;
     if (ig.input.presses[k]) {
      // Switch between the 5 different states.

@@ -11,6 +11,7 @@ window["mods"]["raptureui"]["registerKey"]("emileatasPlay", "TAS Play", ig.KEY.A
 window["mods"]["raptureui"]["registerKey"]("emileatasAdvframe", "TAS Advance Frame", ig.KEY.SUBSTRACT);
 window["mods"]["raptureui"]["registerKey"]("emileatasPtcs", "TAS Play To Cutscene/End", ig.KEY.NUMPAD_9);
 window["mods"]["raptureui"]["registerKey"]("emileatasPtdr", "TAS Play To Dash End/Fill", ig.KEY.NUMPAD_8);
+window["mods"]["raptureui"]["registerKey"]("emileatasToggleJoy", "TAS Toggle Analog Movement", ig.KEY.NUMPAD_7);
 window["mods"]["raptureui"]["registerKey"]("emileatasOverlay", "TAS Toggle Overlay", ig.KEY.NUMPAD_5);
 window["mods"]["raptureui"]["registerKey"]("emileatasSpdD", "Playback Slowdown", ig.KEY.NUMPAD_4);
 window["mods"]["raptureui"]["registerKey"]("emileatasSpdU", "Playback Speedup", ig.KEY.NUMPAD_6);

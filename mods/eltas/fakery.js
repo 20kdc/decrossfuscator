@@ -99,7 +99,45 @@ ig.Timer["emileatasCheckpoint"] = function () {
  *  mouseY: 0
  * }
  *
+ * There is also the possible additional attribute 'leftStick', containing: {x:0, y:0}
+ * While eltas's model is primarily designed around a PC keyboard & mouse,
+ *  some speedrunning tricks require direct control of player orientation.
+ * (Direct control of attack direction is of course controlled via mouse, and so on;
+ *   supporting more than the movement stick will thus have no effect on gameplay.
+ *  The TAS System also has too many buttons for a proper controller interface,
+ *   so support of controllers as an input device is not happening;
+ *   left stick emulation is only supported as part of what is necessary
+ *   to provide all inputs players can achieve to all other users.
+ *  Please see the comments on Symphonia46's video,
+ *   https://www.youtube.com/watch?v=HtyliqQBu8k
+ *   for several instances giving the reasoning.)
+ *
  */
+
+// Effectively disable actual gamepad support as it's hard to setup a proper full proxy for this.
+ig.Html5GamepadHandler.inject({
+ update: function (c) {
+ }
+});
+// But then add support for a fake gamepad controlled by the injections into ig.Input.
+ig.GamepadManager.addHandlerCheck(function() {
+ return new (ig.Class.extend({
+  ["myFakeGamepad"]: null,
+  init: function () {
+   this["myFakeGamepad"] = new ig.Gamepad();
+  },
+  update: function (gamepads) {
+   if (ig.input["emileatasMockDetails"] && ig.input["emileatasMockDetails"]["leftStick"]) {
+    var ls = ig.input["emileatasMockDetails"]["leftStick"];
+    gamepads["myFakeGamepad"] = this["myFakeGamepad"];
+    this["myFakeGamepad"].updateAxes(ig.AXES.LEFT_STICK_X, ls["x"]);
+    this["myFakeGamepad"].updateAxes(ig.AXES.LEFT_STICK_Y, ls["y"]);
+   } else if ("myFakeGamepad" in gamepads) {
+    delete gamepads["myFakeGamepad"];
+   }
+  }
+ }))();
+})
 
 // This does the input filtering.
 ig.Input.inject({
@@ -148,11 +186,6 @@ ig.Input.inject({
    return false;
   }
   return this.parent(a);
- }
-});
-// Effectively disable gamepad support.
-ig.Html5GamepadHandler.inject({
- update: function (c) {
  }
 });
 
