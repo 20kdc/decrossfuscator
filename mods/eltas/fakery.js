@@ -15,17 +15,29 @@ ig.Timer.step = function () {
  ig.Timer.time += stepVal * ig.Timer.timeScale;
 };
 
+// This is used to generate specific values to lock specific code out of an RNG,
+//  be it a deterministic RNG or a fixed-value one.
+// This is because certain sound-related code in CrossCode interferes with deterministic RNGs,
+//  and certain gameplay-related code in CrossCode will CRASH - repeat, will CRASH - if given a fixed-value RNG with a 'bad' value.
+Math["emileatasLockedValue"] = null;
+
+// Deterministic RNG current value.
+Math["emileatasRandomValue"] = 0;
+
+Math["emileatasUseDRNG"] = false;
+
 // Needed for determinism.
-//Math["randomValue"] = 0;
 // function rnd() rv = ((rv + 0.1) * 13.9241512) rv = rv - math.floor(rv) return rv end
-//Math.random = function () {
-// Math["randomValue"] += 0.1;
-// Math["randomValue"] *= 13.9241512;
-// Math["randomValue"] -= Math.floor(Math["randomValue"]);
-// return Math["randomValue"];
-//};
-// Backup strategy, because sound stuff likes to play with the RNG true randomness seems to work
+
 Math.random = function () {
+ if (Math["emileatasLockedValue"] != null)
+  return Math["emileatasLockedValue"];
+ if (Math["emileatasUseDRNG"]) {
+  Math["emileatasRandomValue"] += 0.1;
+  Math["emileatasRandomValue"] *= 13.9241512;
+  Math["emileatasRandomValue"] -= Math.floor(Math["emileatasRandomValue"]);
+  return Math["emileatasRandomValue"];
+ }
  return 0.5;
 };
 
@@ -39,7 +51,8 @@ ig.Timer["emileatasCheckpoint"] = function () {
  ig.system.clock.reset();
  ig.system.actualTick = 0;
  ig.cleanCache();
- Math["randomValue"] = 0;
+ Date["simulated"] = 0;
+ Math["emileatasRandomValue"] = 0;
  // Camera is used for some triggers (has effect on gameplay).
  // Try to wipe it completely clean if this would not affect gameplay
  if (sc.model.isTitle()) {
@@ -145,23 +158,23 @@ ig.Html5GamepadHandler.inject({
 
 ig.System.inject({
  "emileatasTasks": [],
- "emileatasSuperspeed": 1,
  "emileatasRunningTask": false,
- // Also holds actual parent run
- "emileatasStartedRun": null,
+ // Actual parent run function.
+ "emileatasGameRun": null,
  init: function (a, b, c, j, k, l) {
   this.parent(a, b, c, j, k, l);
   // Extra backup safety.
   this.clock.tick = function () {
    if (ig.Timer["emileatasLocked"])
     return 0;
+   Date["simulated"] += 1000 / 60;
    return 1 / 60;
   };
  },
  setWindowFocus: function (focusLost) {
   // Do nothing, this functionality can break things
  },
- "emileatasRunCore": function () {
+ "emileatasInternalRun2": function () {
   if (ig.system["emileatasTasks"].length > 0) {
    // Tasks to run, stay in holding pattern.
    if (!ig.system["emileatasRunningTask"]) {
@@ -173,39 +186,35 @@ ig.System.inject({
   if (ig.loading || ig.system["emileatasRunningTask"]) {
    return;
   }
-  if (sc.model.isLoading()) {
-   ig.Timer["emileatasLocked"] = true;
-   this["emileatasStartedRun"]();
-   ig.Timer["emileatasLocked"] = false;
-   return;
-  }
+
   var tascore = window["mods"]["eltas"]["tascore"];
   if (!tascore)
    tascore = window["mods"]["eltas"]["tascore"] = new window["mods"]["eltas"]["TASCore"]();
-  var mock = tascore["preRun"]();
-  if (mock != null) {
-   ig.input["emileatasAccept"](mock);
-   this["emileatasStartedRun"]();
-   ig.input["emileatasAccept"](null);
-  } else {
-   ig.input.clearPressed();
+
+  if (sc.model.isLoading()) {
+   ig.Timer["emileatasLocked"] = true;
+   // Safety nets.
+   Math["emileatasLockedValue"] = 0.5;
+   tascore["runLoading"]();
+   Math["emileatasLockedValue"] = null;
+   ig.Timer["emileatasLocked"] = false;
+   return;
   }
-  tascore["postRun"]();
+  tascore["run"]();
  },
- "emileatasTrueRun": function () {
+ "emileatasInternalRun": function () {
   try {
-   for (var i = 0; i < this["emileatasSuperspeed"]; i++)
-    this["emileatasRunCore"]();
+   this["emileatasInternalRun2"]();
   } catch (b) {
    ig.system.error(b);
   }
-  window.requestAnimationFrame(ig.system["emileatasTrueRun"].bind(ig.system), ig.system.canvas);
+  window.requestAnimationFrame(ig.system["emileatasInternalRun"].bind(ig.system), ig.system.canvas);
  },
  run: function () {
-  if (this["emileatasStartedRun"])
+  if (this["emileatasGameRun"])
    return;
-  this["emileatasStartedRun"] = this.parent.bind(this);
-  this["emileatasTrueRun"]();
+  this["emileatasGameRun"] = this.parent.bind(this);
+  this["emileatasInternalRun"]();
  }
 });
 
