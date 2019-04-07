@@ -50,7 +50,7 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
  modEnabled: false,
  init: function (modId, wantedWidth) {
   this.modId = modId;
-  this.modWanted = !(rapture.config["disable-" + modId]);
+  this.modWanted = !(rapture["config"]["disable-" + modId]);
   this.modWantedOrig = this.modWanted;
   this.modEnabled = rapture["enabledMods"].indexOf(modId) != -1;
   this.parent(this.generateText(), wantedWidth, undefined, sc.BUTTON_TYPE.EQUIP);
@@ -85,9 +85,9 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
     // Perform dependency check
     for (var i = 0; i < rapture["knownMods"].length; i++) {
      var mod = rapture["knownMods"][i];
-     if (!(rapture.config["disable-" + mod])) {
+     if (!(rapture["config"]["disable-" + mod])) {
       // This is sanitized by rapture.js
-      var deps = rapture["loadedHeaders"].get(mod).dependencies;
+      var deps = rapture["loadedHeaders"].get(mod)["dependencies"];
       // NOTE: '?'-dependencies don't matter here, so there's no handling for that.
       for (var j = 0; j < deps.length; j++)
        if (deps[j] == this.modId)
