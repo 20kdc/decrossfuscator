@@ -22,4 +22,6 @@ TJMF=$ROOTDIR/versions/$TVERSION
 SJSF=$SJMF/subdir/assets/js/game.compiled.js
 TJSF=$TJMF/subdir/assets/js/game.compiled.js
 
-node compmap.js $SJMF/deobf.map $TJMF/deobf.map $MATCHERS
+CCVER=$(basename $(readlink -m $TJMF))
+
+node compmap.js $SJMF/deobf.map $TJMF/deobf.map $MATCHERS $CCVER

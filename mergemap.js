@@ -5,6 +5,8 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
+// 2: tokens 3: deobfmap 4: mainmatcher 5: googlematcher
+
 var fs = require("fs");
 var lexer = require("./lib/lexer");
 var mapper = require("./lib/mapper");
@@ -15,9 +17,9 @@ var mapper = require("./lib/mapper");
 
 var tokens = lexer.strip(lexer.lexString(fs.readFileSync(process.argv[2], "utf8")));
 var deobfMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[3], "utf8"));
-var mainMatcher = new matcher.Matcher();
+var mainMatcher = new matcher.Matcher("0.0.0-0");
 mainMatcher.loadProfileFile(process.argv[4]);
-var googleMatcher = new matcher.Matcher();
+var googleMatcher = new matcher.Matcher("0.0.0-0");
 googleMatcher.loadProfileFile(process.argv[5]);
 
 googleMatcher = googleMatcher.execute(tokens);

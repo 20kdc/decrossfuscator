@@ -5,7 +5,7 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-// 2:old 3:new 4:lost-syms-profile
+// 2:old 3:new 4:lost-syms-profile 5:lost-syms-version
 
 var fs = require("fs");
 var mapper = require("./lib/mapper");
@@ -17,7 +17,7 @@ var rosettaGlobals = require("./lib/rosetta-global-data");
 var oldMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[2], "utf8"));
 var newMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[3], "utf8"));
 
-var mainMatcher = new matcher.Matcher();
+var mainMatcher = new matcher.Matcher(process.argv[5]);
 mainMatcher.loadProfileFile(process.argv[4]);
 
 function checkId(str, d) {

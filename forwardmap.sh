@@ -20,5 +20,7 @@ TJMF=$ROOTDIR/versions/$TVERSION
 SJSF=$SJMF/subdir/assets/js/game.compiled.js
 TJSF=$TJMF/subdir/assets/js/game.compiled.js
 
-node forwardmap.js $SJSF $SJMF/deobf.map $TJSF lib/blank.map fixup pass1 > $TJMF/deobf-forward.map
+CCVER=$(basename $(readlink -m $TJMF))
+
+node forwardmap.js $SJSF $SJMF/deobf.map $TJSF lib/blank.map fixup $CCVER pass1 > $TJMF/deobf-forward.map
 cp $TJMF/deobf-forward.map $TJMF/deobf.map

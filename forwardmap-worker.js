@@ -5,7 +5,7 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-// 2:oldJS 3:oldJS-ST 4:oldJS-ET 5:oldMap 6:newJS 7:lastNewMap 8:saveCandidatesJSON 9:mode
+// 2:oldJS 3:oldJS-ST 4:oldJS-ET 5:oldMap 6:newJS 7:lastNewMap 8:saveCandidatesJSON 9:mode 10:ccver
 // ET is not inclusive, ST is
 
 var fs = require("fs");
@@ -27,6 +27,8 @@ var mapAlreadyResolvedDO = mapper.loadDeobfToObf(fs.readFileSync(process.argv[7]
 var candidateMapTarget = process.argv[8];
 // mode
 var mode = process.argv[9];
+
+var ccver = process.argv[10];
 
 console.error("Worker " + candidateMapTarget + " : " + JSON.stringify(process.argv));
 
@@ -60,7 +62,7 @@ if (mode == "debug") {
  console.error("UNKNOWN MODE " + mode);
 }
 
-var matchGoogle = new matcher.Matcher();
+var matchGoogle = new matcher.Matcher(ccver);
 matchGoogle.loadProfileFile("google");
 var gMapOld = matchGoogle.execute(oldTokens).map;
 var gOldPropCalls = [gMapOld.get("googleNewGetter"), gMapOld.get("googleNewSetter")];

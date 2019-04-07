@@ -16,8 +16,8 @@ MODFOLDER=$PWD/mods
 
 ./package-rapture.sh
 
-rm -r rapture-testfield
-mkdir rapture-testfield
-cp -r $VERSIMF/subdir/* rapture-testfield/
-cd rapture-testfield
-unzip ../rapture-package.zip
+rm -r workfiles/rapture-testfield
+mkdir -p workfiles/rapture-testfield
+cp -r $VERSIMF/subdir/* workfiles/rapture-testfield/
+cd workfiles/rapture-testfield
+unzip -o ../../rapture-package.zip

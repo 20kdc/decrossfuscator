@@ -35,7 +35,7 @@ if ((process.argv[4] == "deobf") || (process.argv[4] == "deobf-unsafe") || (proc
  // Standard deobfuscation mode
  mapping = mapper.loadObfToDeobf(mapping);
 
- matchGoogle = new matcher.Matcher();
+ matchGoogle = new matcher.Matcher("0.0.0-0");
  matchGoogle.loadProfileFile("google");
 
  GOOGLE_CALLS_DST = matchGoogle.knownNames;
@@ -115,6 +115,8 @@ for (var i = 0; i < tkns.length; i++) {
          if (mTokens.length != 1)
           throw new Error("JSON.stringify to escape string provided too many or no tokens. Fix lexer or local JSON.stringify kthxbai.");
          tkns[i + 2][1] = lexer.delexString(mTokens);
+        } else if (unresolvedSymbolsAreWildcards) {
+         tkns[i + 2][1] = "\"$$\"";
         }
        }
    // Done translating google call innards, safe to check for other kinds of google calls.
@@ -127,7 +129,7 @@ for (var i = 0; i < tkns.length; i++) {
    }
   }
   if (unresolvedSymbolsAreWildcards && !resolved)
-   if (!doNotMap(tkns[i][1]))
+   if (lexer.words.all.indexOf(tkns[i][1]) == -1)
     tkns[i][1] = "$$";
  }
 }

@@ -5,7 +5,7 @@
  * You should have received a copy of the CC0 Public Domain Dedication along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
-// 2:oldJS 3:oldMAP 4:newJS 5:lastNewMAP 6:lostsym-exclusion-matcher 7:mode
+// 2:oldJS 3:oldMAP 4:newJS 5:lastNewMAP 6:lostsym-exclusion-matcher 7:cc-version 8:mode
 
 var fs = require("fs");
 var process = require("process");
@@ -20,7 +20,7 @@ var oldTokens = lexer.strip(lexer.lexString(fs.readFileSync(process.argv[2], "ut
 
 var realMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[5], "utf8"));
 
-var exclusionMatcher = new matcher.Matcher();
+var exclusionMatcher = new matcher.Matcher(process.argv[7]);
 exclusionMatcher.loadProfileFile(process.argv[6]);
 
 console.error("forwardmap.js: " + oldTokens.length + " tokens to chew through");
@@ -31,7 +31,7 @@ var candidateMap = new Map();
 function processCore(idx, len, st) {
  processCount++;
  console.error("Activating " + st);
- var proc = child_process.spawn(process.argv[0], ["forwardmap-worker.js", process.argv[2], idx.toString(), (idx + len).toString(), process.argv[3], process.argv[4], process.argv[5], st, process.argv[7]], {
+ var proc = child_process.spawn(process.argv[0], ["forwardmap-worker.js", process.argv[2], idx.toString(), (idx + len).toString(), process.argv[3], process.argv[4], process.argv[5], st, process.argv[8], process.argv[7]], {
   stdio: "inherit"
  });
  proc.on("close", function (ex) {
