@@ -136,12 +136,12 @@ eta["drawOverlay"] = function () {
  var urBlk = new ig.TextBlock(sc.fontsystem.smallFont, urText, {textAlign: ig.Font.ALIGN.RIGHT});
  var drBlk = new ig.TextBlock(sc.fontsystem.smallFont, drText, {textAlign: ig.Font.ALIGN.RIGHT});
 
- if (rapture["config"]["eltas-overlayUL"].length != 0)
+ if (uText.length != 0)
   drawOverlayLine(uBlk, true, false);
- if (rapture["config"]["eltas-overlayDL"].length != 0)
+ if (dText.length != 0)
   drawOverlayLine(dBlk, false, false);
- if (rapture["config"]["eltas-overlayUR"].length != 0)
+ if (urText.length != 0)
   drawOverlayLine(urBlk, true, true);
- if (rapture["config"]["eltas-overlayDR"].length != 0)
+ if (drText.length != 0)
   drawOverlayLine(drBlk, false, true);
 };

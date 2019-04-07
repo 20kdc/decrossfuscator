@@ -43,5 +43,16 @@ eta["TASCore"].inject({
    return false;
   }
   return true;
+ },
+
+ "checkSubframeImportance": function (isFirst, isLast) {
+  if (this["timelineState"] == eta["TAS_TIMELINE_STATE"]["ADVANCE"]) {
+   // In frame-advance mode, only the first frame will ever cause a render.
+   return isFirst;
+  } else {
+   // In playback mode, all frames cause a render, but only the last should be treated seriously.
+   // It has to be the last due to the glitches that occur otherwise.
+   return isLast;
+  }
  }
 });

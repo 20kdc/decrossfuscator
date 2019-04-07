@@ -73,7 +73,7 @@ eta["overlayComponents"]["eltas.Reader"] = new (eta["OverlayComponent"].extend({
 eta["overlayComponents"]["eltas.Writer"] = new (eta["OverlayComponent"].extend({
  text: function () {
   if (eta["tascore"]["writer"] != null)
-   return eta["tascore"]["writer"].length.toString();
+   return eta["tascore"]["writer"]["frames"].length.toString();
   return null;
  }
 }))("Wr");
@@ -112,6 +112,17 @@ eta["overlayComponents"]["eltas.Keys"] = new (eta["OverlayComponent"].extend({
  }
 }))("K");
 
+eta["overlayComponents"]["eltas.Warning"] = new (eta["OverlayComponent"].extend({
+ text: function () {
+  if (ig.system["emileatasWarning"])
+   return ig.system["emileatasWarning"];
+  if (!Math["emileatasUseDRNG"])
+   return "'Constant RNG' in use. Some may be offended by the lack of randomness.";
+  return eta["tascore"]["speedTrackingOverruns"].toString() + "/" + eta["tascore"]["speedTrackingUnderruns"].toString() + "/" + eta["tascore"]["speedTimeBreak"].toString();
+  //return null;
+ }
+}))("Warning");
+
 // -- Setup default...
 eta["overlayDefaultDL"].push("eltas.PlayerState");
 eta["overlayDefaultDL"].push("eltas.Dash");
@@ -126,6 +137,8 @@ eta["overlayDefaultDL"].push("eltas.Reader");
 eta["overlayDefaultDL"].push("eltas.Writer");
 
 eta["overlayDefaultDR"].push("eltas.Keys");
+
+eta["overlayDefaultUL"].push("eltas.Warning");
 
 // Optional Components
 eta["overlayComponents"]["eltas.Map"] = new (eta["OverlayComponent"].extend({

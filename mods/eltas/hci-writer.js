@@ -19,7 +19,11 @@ eta["TASCore"].inject({
    if (this["writer"] != null) {
     this["writer"] = null;
    } else {
-    this["writer"] = [];
+    this["writer"] = {
+     "frames": []
+    };
+    if (Math["emileatasUseDRNG"])
+     this["writer"]["dRNG"] = true;
     ig.Timer["emileatasCheckpoint"]();
    }
   }
@@ -38,7 +42,7 @@ eta["TASCore"].inject({
   this.parent(mock);
   this["hasSavedThisFrame"] = false;
   if (this["writer"])
-   this["writer"].push(mock);
+   this["writer"]["frames"].push(mock);
  },
 
 });

@@ -9,6 +9,7 @@ var eta = window["mods"]["eltas"] = {};
 
 rapture["include"]("fakery.js");
 rapture["include"]("workarounds.js");
+rapture["include"]("safe-render-off.js");
 
 eta["decodeEnum"] = function (enu, val) {
  for (var k in enu) {
@@ -54,8 +55,11 @@ eta["TASCore"] = ig.Class.extend({
   // This space reserved for input control
   ig.system["emileatasGameRun"]();
   // This space also reserved for input control
- }
+ },
 
+ // Occurs whenever a "run" does not happen. This includes after a "runLoading".
+ "alertTimeBreak": function () {
+ }
 });
 
 eta["tascore"] = null;

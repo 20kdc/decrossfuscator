@@ -30,17 +30,28 @@ eta["TASCore"].inject({
  "loadReader": function () {
   var fs = require("fs");
   this["reader"] = JSON.parse(fs.readFileSync("eltasBuffer.json", "utf8"));
+  if (this["reader"] instanceof Array) {
+   this["reader"] = {
+    "frames": this["reader"]
+   };
+  }
+  if (this["reader"]["dRNG"]) {
+   Math["emileatasUseDRNG"] = true;
+  } else {
+   Math["emileatasUseDRNG"] = false;
+  }
   this["readerTimer"] = 0;
   // If there's a writer, then checkpointing would upset the flow of that writer
   // If there's no writer, nothing to worry about
   if (this["writer"] == null)
    ig.Timer["emileatasCheckpoint"]();
+  if (this["reader"]["frames"].length == 0)
+   this["reader"] = null;
  },
 
  "advanceReader": function () {
-  this["reader"].shift();
   this["readerTimer"]++;
-  if (this["reader"].length == 0) {
+  if (this["readerTimer"] >= this["reader"]["frames"].length) {
    this["reader"] = null;
    if (this["inputSrc"] == eta["TAS_INPUT_SOURCE"]["READER"])
     this["enterInputSrc"](eta["TAS_INPUT_SOURCE"]["DIRECT"]);
@@ -57,8 +68,8 @@ eta["TASCore"].inject({
 
  "executeInputSrc": function () {
   if (this["inputSrc"] == eta["TAS_INPUT_SOURCE"]["READER"]) {
-   if (this["reader"].length > 0)
-    this["workingMock"] = ig.copy(this["reader"][0]);
+   if (this["readerTimer"] < this["reader"]["frames"].length)
+    this["workingMock"] = ig.copy(this["reader"]["frames"][this["readerTimer"]]);
    return;
   }
   this.parent();

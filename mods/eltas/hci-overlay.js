@@ -22,7 +22,7 @@ eta["TASCore"].inject({
   if (this["overlayImgSheet"])
    ig.system.context.drawImage(this["overlayImgSheet"], x, y, w, h, 0, 0, w, h);
  },
- "init": function () {
+ init: function () {
   this["overlayCanvas"] = ig.$new("canvas");
   this["overlayCanvas"].width = ig.system.canvas.width;
   this["overlayCanvas"].height = ig.system.canvas.height;

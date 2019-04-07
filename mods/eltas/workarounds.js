@@ -10,14 +10,14 @@
 
 sc.NpcRunnerSpawner.inject({
  getRandomCharacter: function () {
-  if (Math["emileatasUseDRNG"] && !Math["emileatasLockedValue"])
+  if (Math["emileatasUseDRNG"] && (Math["emileatasLockedValue"] == null))
    return this.parent();
   // Overriding Math.random won't work ; it seems the only way to make this work is true randomness...
   return this.groupData.characters[0];
  }
 });
 
-// This is important if the TAS system ever moves to deterministic randomness.
+// This is important if the TAS system is on deterministic randomness.
 // The sound manager throws about as many wrenches as one can find, and seems to have room for a few more, into these plans.
 ig.SoundManager.inject({
  update: function () {

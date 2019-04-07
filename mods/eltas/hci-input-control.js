@@ -21,7 +21,7 @@ eta["TASCore"].inject({
 
  "inputSrc": eta["TAS_INPUT_SOURCE"]["DIRECT"],
 
- "init": function () {
+ init: function () {
   this["workingMock"] = ig.copy(eta["blankMock"]);
   this["lastMock"] = ig.copy(eta["blankMock"]);
  },

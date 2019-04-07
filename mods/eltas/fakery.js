@@ -24,7 +24,7 @@ Math["emileatasLockedValue"] = null;
 // Deterministic RNG current value.
 Math["emileatasRandomValue"] = 0;
 
-Math["emileatasUseDRNG"] = false;
+Math["emileatasUseDRNG"] = false; // Don't for release, it breaks stuff
 
 // Needed for determinism.
 // function rnd() rv = ((rv + 0.1) * 13.9241512) rv = rv - math.floor(rv) return rv end
@@ -40,6 +40,9 @@ Math.random = function () {
  }
  return 0.5;
 };
+
+
+Date["realNow"] = Date.now;
 
 Date["simulated"] = 0;
 Date.now = function () {
@@ -74,44 +77,7 @@ ig.Timer["emileatasCheckpoint"] = function () {
 };
 
 /*
- * It is important to note here the Cubic Impact input model.
- * Having any activity involving a key makes state("that key") return true.
- * This includes, of course, that key being held.
- * But it also includes the frame of a keyup.
- * Thus, the state list is:
- *
- * 1: Incoming. DS
- * 2: Held.      S
- * 3: Outgoing.  SU
- * 4: Perfect.  DSU
- *
- * Getting the special keyup behavior of 3 or 4 wrong will cause charged shots to simply fail to work.
- * This is because Crosshair.isThrowCharged checks that the character controller is aiming.
- * This in turn involves a call to check the input state.
- * Since if you got this wrong the input state of a released button would be false, things break.
- * -- someone who got this wrong
- * 
- * Example mock:
- *
- * {
- *  state: {jump: (1/2/3/4)},
- *  mouseX: 0,
- *  mouseY: 0
- * }
- *
- * There is also the possible additional attribute 'leftStick', containing: {x:0, y:0}
- * While eltas's model is primarily designed around a PC keyboard & mouse,
- *  some speedrunning tricks require direct control of player orientation.
- * (Direct control of attack direction is of course controlled via mouse, and so on;
- *   supporting more than the movement stick will thus have no effect on gameplay.
- *  The TAS System also has too many buttons for a proper controller interface,
- *   so support of controllers as an input device is not happening;
- *   left stick emulation is only supported as part of what is necessary
- *   to provide all inputs players can achieve to all other users.
- *  Please see the comments on Symphonia46's video,
- *   https://www.youtube.com/watch?v=HtyliqQBu8k
- *   for several instances giving the reasoning.)
- *
+ * Input Mock Documentation now at TAPE_FMT
  */
 
 // Effectively disable actual gamepad support as it's hard to setup a proper full proxy for this.
@@ -189,11 +155,20 @@ ig.Input.inject({
  }
 });
 
+var getTASCore = function () {
+ var tascore = window["mods"]["eltas"]["tascore"];
+ if (!tascore)
+  tascore = window["mods"]["eltas"]["tascore"] = new window["mods"]["eltas"]["TASCore"]();
+ return tascore;
+};
+
 ig.System.inject({
  "emileatasTasks": [],
  "emileatasRunningTask": false,
+ "emileatasAJAXTransferToTask": false,
  // Actual parent run function.
  "emileatasGameRun": null,
+ "emileatasWarning": null,
  init: function (a, b, c, j, k, l) {
   this.parent(a, b, c, j, k, l);
   // Extra backup safety.
@@ -208,21 +183,20 @@ ig.System.inject({
   // Do nothing, this functionality can break things
  },
  "emileatasInternalRun2": function () {
+  var tascore = getTASCore();
   if (ig.system["emileatasTasks"].length > 0) {
    // Tasks to run, stay in holding pattern.
    if (!ig.system["emileatasRunningTask"]) {
     ig.system["emileatasRunningTask"] = true;
     ig.system["emileatasTasks"].shift()();
    }
+   tascore["alertTimeBreak"]();
    return;
   }
   if (ig.loading || ig.system["emileatasRunningTask"]) {
+   tascore["alertTimeBreak"]();
    return;
   }
-
-  var tascore = window["mods"]["eltas"]["tascore"];
-  if (!tascore)
-   tascore = window["mods"]["eltas"]["tascore"] = new window["mods"]["eltas"]["TASCore"]();
 
   if (sc.model.isLoading()) {
    ig.Timer["emileatasLocked"] = true;
@@ -231,6 +205,7 @@ ig.System.inject({
    tascore["runLoading"]();
    Math["emileatasLockedValue"] = null;
    ig.Timer["emileatasLocked"] = false;
+   tascore["alertTimeBreak"]();
    return;
   }
   tascore["run"]();
@@ -264,7 +239,10 @@ ig.System.inject({
     //console.log("Did load end.");
     ig.system["emileatasRunningTask"] = false;
     a && a(b, c, d);
+    // Ends the time it took for a callback, so alert to time break
+    getTASCore()["alertTimeBreak"]();
    });
+   getTASCore()["alertTimeBreak"]();
   };
   if ((!ig.system) || (!ig.system.running)) {
    // Game not using run()
@@ -272,6 +250,7 @@ ig.System.inject({
   } else {
    ig.system["emileatasTasks"].push(cb);
   }
+  getTASCore()["alertTimeBreak"]();
  }
  ig.Loadable.inject({
   load: loadCommon
@@ -279,5 +258,35 @@ ig.System.inject({
  ig.SingleLoadable.inject({
   load: loadCommon
  });
+ ig.Game.inject({
+  preloadLevel: function (a) {
+   ig.system["emileatasAJAXTransferToTask"] = true;
+   this.parent(a);
+   ig.system["emileatasAJAXTransferToTask"] = false;
+  }
+ });
+ var oldAjax = $.ajax;
+ $.ajax = function (a) {
+  if ((ig.system) && (ig.system.running)) {
+   if (ig.system["emileatasAJAXTransferToTask"]) {
+    var oldSuccess = a.success;
+    // As per usual, making it a task ensures it isn't handled until after the frame,
+    //  and after that frames are disabled until the request finishes
+    ig.system["emileatasTasks"].push(function () {
+     a.success = function (res) {
+      oldSuccess.bind(this)(res);
+      ig.system["emileatasRunningTask"] = false;
+     };
+     oldAjax(a);
+    });
+   } else {
+    if (!ig.system["emileatasRunningTask"]) {
+     ig.system["emileatasWarning"] = "AJAX Request Performed Outside Of Loading Barrier!\nDeterminism Compromised. Contact 20kdc Immediately.";
+     if (a.url)
+      ig.system["emileatasWarning"] += "\nTrace: " + a.url;
+    }
+   }
+  }
+  oldAjax(a);
+ };
 })();
-
