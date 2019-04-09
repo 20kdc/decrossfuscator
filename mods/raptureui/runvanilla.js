@@ -29,9 +29,9 @@ sc.GameModel.inject({
 sc.CrossCode.inject({
  transitionEnded: function () {
   if (sc.model.currentSubState == sc.GAME_MODEL_SUBSTATE["RAPTUREUI_RUNVANILLA"]) {
-   rapture.runVanilla();
+   rapture["runVanilla"]();
   } else if (sc.model.currentSubState == sc.GAME_MODEL_SUBSTATE["RAPTUREUI_UNINSTALL"]) {
-   rapture.uninstall();
+   rapture["uninstall"]();
   } else if (sc.model.currentSubState == sc.GAME_MODEL_SUBSTATE["RAPTUREUI_REFRESH"]) {
    location.href = location.href;
   }

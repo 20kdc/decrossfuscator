@@ -15,11 +15,11 @@ rui["registerKey"] = function (int, eng, k) {
   //console.log("doing the other thing");
   var sov = sc.options.values["keys-" + int];
   if (sov) {
-   if (sov.key1) {
-    ig.input.bind(sov.key1, int);
+   if (sov["key1"]) {
+    ig.input.bind(sov["key1"], int);
    }
-   if (sov.key2) {
-    ig.input.bind(sov.key2, int);
+   if (sov["key2"]) {
+    ig.input.bind(sov["key2"], int);
    }
   } else {
    ig.input.bind(k, int);
@@ -38,8 +38,8 @@ rui["registerKey"] = function (int, eng, k) {
  sc.OPTIONS_DEFINITION["keys-" + int] = {
   type: "CONTROLS",
   init: {
-   key1: k,
-   key2: undefined
+   "key1": k,
+   "key2": undefined
   },
   cat: sc.OPTION_CATEGORY.CONTROLS,
  };
@@ -63,13 +63,13 @@ sc.KeyBinder.inject({
   sc.options.hasChanged = true;
   // Unbind existing key
   if (!key2) {
-   ig.input.unbind(inputOpt.key1);
-  } else if (ig.input.bindings[inputOpt.key2]) {
-   ig.input.unbind(inputOpt.key2);
+   ig.input.unbind(inputOpt["key1"]);
+  } else if (ig.input.bindings[inputOpt["key2"]]) {
+   ig.input.unbind(inputOpt["key2"]);
   }
   if (key2 && unbind) {
    // Unbind only works for key2.
-   inputOpt.key2 = undefined;
+   inputOpt["key2"] = undefined;
   } else {
    var inputId = inputOptId.substr(5);
    var conflict = ig.input.bindings[igKeyId];
@@ -78,11 +78,11 @@ sc.KeyBinder.inject({
    if (conflict) {
     // Conflict: Swaps keys.
     var conflictOpt = i["keys-" + conflict];
-    var oldKey = key2 ? inputOpt.key2 : inputOpt.key1;
-    if (conflictOpt.key1 == igKeyId) {
-     conflictOpt.key1 = oldKey;
-    } else if (conflictOpt.key2 == igKeyId) {
-     conflictOpt.key2 = oldKey;
+    var oldKey = key2 ? inputOpt["key2"] : inputOpt["key1"];
+    if (conflictOpt["key1"] == igKeyId) {
+     conflictOpt["key1"] = oldKey;
+    } else if (conflictOpt["key2"] == igKeyId) {
+     conflictOpt["key2"] = oldKey;
     } else {
      console.log("Unable to find the binding to swap.");
     }
@@ -92,9 +92,9 @@ sc.KeyBinder.inject({
    }
    // Actually set the target key to the target key ID.
    if (!key2) {
-    inputOpt.key1 = igKeyId;
+    inputOpt["key1"] = igKeyId;
    } else {
-    inputOpt.key2 = igKeyId;
+    inputOpt["key2"] = igKeyId;
    }
   }
  }

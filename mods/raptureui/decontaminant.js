@@ -18,7 +18,7 @@ sc.VerionChangeLog.inject({
  }
 });
 
-var ccDeveloperAlert = "RaptureUI in use, Rapture " + rapture.version + ". This save came directly from a modded copy of the game.";
+var ccDeveloperAlert = "RaptureUI in use, Rapture " + rapture["version"] + ". This save came directly from a modded copy of the game.";
 var ccDeveloperAlertLongterm = "RaptureUI was previously used as part of this save's history. If you do not see an ALERT_TO_CC_DEVS in the outer save object, then it's not modded anymore, and will likely not affect the bug."
 
 sc.CrossCode.inject({
@@ -42,7 +42,7 @@ rui["RIGameAddon"] = ig.GameAddon.extend({
  }
 });
 ig.addGameAddon(function() {
- return rui.riGameAddon = new rui.RIGameAddon();
+ return rui["riGameAddon"] = new rui["RIGameAddon"]();
 });
 if (ig.LANG_EDIT_SUBMIT_URL)
  ig.LANG_EDIT_SUBMIT_URL += "?modded=raptureui";

@@ -62,7 +62,8 @@
  // (NOTE: scaleX/scaleY centre around the centre of the image, ignoring align, which is all well and good but causes trouble here.
  //  So it's probably a bad idea to even try messing around with those.)
  
- ig.GUI.IntroScreen.inject({
+ // Interestingly, this symbol isn't obfuscated... I suspect the 'GUI' namespace has something to do with it.
+ ig.GUI["IntroScreen"].inject({
   init: function (a) {
    this.gfx["techBG"] = theTechBG;
    // Try to centre these a bit more?

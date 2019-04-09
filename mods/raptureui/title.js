@@ -22,14 +22,14 @@ rui["TitleOverlayGui"] = ig.GuiElementBase.extend({
   this.hook.transitions["DEFAULT"] = {
    state: {},
    time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
+   timeFunction: KEY_SPLINES["EASE"]
   };
   this.hook.transitions["HIDDEN"] = {
    state: {
     offsetY: ig.system.height
    },
    time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
+   timeFunction: KEY_SPLINES["EASE"]
   };
   this.doStateTransition("HIDDEN", true);
  },
@@ -46,42 +46,42 @@ rui["TitleOverlayGui"] = ig.GuiElementBase.extend({
 // Ok, so it's clear none of the existing GUIs fit 'big button containing long description'
 //  so let's just make one up!
 rui["ModButtonGui"] = sc.ButtonGui.extend({
- modId: null,
- modEnabled: false,
+ "modId": null,
+ "modEnabled": false,
  init: function (modId, wantedWidth) {
-  this.modId = modId;
-  this.modWanted = !(rapture["config"]["disable-" + modId]);
-  this.modWantedOrig = this.modWanted;
-  this.modEnabled = rapture["enabledMods"].indexOf(modId) != -1;
-  this.parent(this.generateText(), wantedWidth, undefined, sc.BUTTON_TYPE.EQUIP);
+  this["modId"] = modId;
+  this["modWanted"] = !(rapture["config"]["disable-" + modId]);
+  this["modWantedOrig"] = this["modWanted"];
+  this["modEnabled"] = rapture["enabledMods"].indexOf(modId) != -1;
+  this.parent(this["generateText"](), wantedWidth, undefined, sc.BUTTON_TYPE.EQUIP);
   this.textChild.setMaxWidth(wantedWidth - 8);
   this.setHeight(this.textChild.hook.size.y + 8);
-  this.updateFancyEnabledState();
+  this["updateFancyEnabledState"]();
  },
- generateText: function () {
+ "generateText": function () {
   var enState = "\\c[2]ENABLED\\c[0]";
-  if (!this.modEnabled) {
-   if (this.modWantedOrig) {
+  if (!this["modEnabled"]) {
+   if (this["modWantedOrig"]) {
     enState = "\\c[1]FAILURE\\c[0]";
-   } else if (this.modWanted) {
+   } else if (this["modWanted"]) {
     enState = "\\c[4]INACTIVE\\c[0]";
    } else {
     enState = "\\c[1]DISABLED\\c[0]";
    }
-  } else if (!this.modWanted) {
+  } else if (!this["modWanted"]) {
    enState = "\\c[3]RUNNING\\c[0]";
   }
-  return this.modId + ": " + enState + "\n" + rapture["loadedHeaders"].get(this.modId)["description"];
+  return this["modId"] + ": " + enState + "\n" + rapture["loadedHeaders"].get(this["modId"])["description"];
  },
  onButtonPress: function () {
-  if ((this.modId == "raptureui") && this.modWanted) {
+  if ((this["modId"] == "raptureui") && this["modWanted"]) {
    sc.Dialogs.showYesNoDialog("This mod is responsible for the mod management UI - disabling it will leave you unable to enable it again.\nShould you continue, please note: Deleting rapture.json should undo your decision.\nDisable RaptureUI?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
     if (r.data == 0)
-     this.actuallyToggleModState();
+     this["actuallyToggleModState"]();
    }.bind(this));
   } else {
    var reliant = "";
-   if (this.modWanted) {
+   if (this["modWanted"]) {
     // Perform dependency check
     for (var i = 0; i < rapture["knownMods"].length; i++) {
      var mod = rapture["knownMods"][i];
@@ -90,41 +90,41 @@ rui["ModButtonGui"] = sc.ButtonGui.extend({
       var deps = rapture["loadedHeaders"].get(mod)["dependencies"];
       // NOTE: '?'-dependencies don't matter here, so there's no handling for that.
       for (var j = 0; j < deps.length; j++)
-       if (deps[j] == this.modId)
+       if (deps[j] == this["modId"])
         reliant += " " + mod;
      }
     }
    }
    if (reliant != "") {
-    sc.Dialogs.showYesNoDialog("Other enabled mods are dependent on this mod:" + reliant + "\nAs such, it will remain effectively enabled even after a restart unless these are disabled too.\nDisable " + this.modId + "?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
+    sc.Dialogs.showYesNoDialog("Other enabled mods are dependent on this mod:" + reliant + "\nAs such, it will remain effectively enabled even after a restart unless these are disabled too.\nDisable " + this["modId"] + "?", sc.DIALOG_INFO_ICON.WARNING, function (r) {
      if (r.data == 0)
-      this.actuallyToggleModState();
+      this["actuallyToggleModState"]();
     }.bind(this));
    } else {
-    this.actuallyToggleModState();
+    this["actuallyToggleModState"]();
    }
   }
  },
- actuallyToggleModState: function () {
-  if (this.modWanted) {
-   rapture["config"]["disable-" + this.modId] = true;
+ "actuallyToggleModState": function () {
+  if (this["modWanted"]) {
+   rapture["config"]["disable-" + this["modId"]] = true;
   } else {
-   rapture["config"]["disable-" + this.modId] = false;
+   rapture["config"]["disable-" + this["modId"]] = false;
   }
   rapture["saveConfig"]();
-  this.modWanted = !this.modWanted;
-  this.updateFancyEnabledState();
-  rui.showRestartWarning();
+  this["modWanted"] = !this["modWanted"];
+  this["updateFancyEnabledState"]();
+  rui["showRestartWarning"]();
  },
- updateFancyEnabledState: function () {
+ "updateFancyEnabledState": function () {
   var newNinePatch = sc.BUTTON_TYPE.EQUIP.ninepatch;
-  if (!this.modWanted) {
+  if (!this["modWanted"]) {
    newNinePatch = ig.copy(newNinePatch.tile);
    newNinePatch.offsets["default"].x += 64;
    newNinePatch = new ig.NinePatch("media/gui/buttons.png", newNinePatch);
   }
   // Have to avoid changing size
-  this.textChild.setText(this.generateText());
+  this.textChild.setText(this["generateText"]());
   this.bgGui.ninepatch = newNinePatch;
  }
 });
@@ -227,7 +227,7 @@ rui["ModsGui"] = rui["TitleOverlayGui"].extend({
   // Ok, now add content
   var modButtons = [];
   for (var i = 0; i < rapture["knownMods"].length; i++) {
-   modButtons.push(new rui.ModButtonGui(rapture["knownMods"][i], buttonWidth));
+   modButtons.push(new rui["ModButtonGui"](rapture["knownMods"][i], buttonWidth));
    // Equalize height of contents of each row.
    if ((i % 2) == 1) {
     var resHeight = Math.max(modButtons[i - 1].hook.size.y, modButtons[i].hook.size.y);
@@ -276,14 +276,14 @@ sc.TitleScreenButtonGui.inject({
   brand.hook.transitions["DEFAULT"] = {
    state: {},
    time: 0.2,
-   timeFunction: KEY_SPLINES.EASE
+   timeFunction: KEY_SPLINES["EASE"]
   };
   brand.hook.transitions["HIDDEN"] = {
    state: {
     offsetY: -bVerticalTracker
    },
    time: 0.2,
-   timeFunction: KEY_SPLINES.LINEAR
+   timeFunction: KEY_SPLINES["LINEAR"]
   };
   brand.doStateTransition("HIDDEN", true);
   this["raptureuiShowHide"].push(brand);
@@ -310,7 +310,7 @@ sc.TitleScreenButtonGui.inject({
   var buttons = [bMods, bVani];
 
   // Mods GUI
-  var modsGui = new rui.ModsGui(bOfs, bAWidth);
+  var modsGui = new rui["ModsGui"](bOfs, bAWidth);
 
   // Mods GUI Top Button Event Handlers
   bMods.onButtonPress = function() {
@@ -348,14 +348,14 @@ sc.TitleScreenButtonGui.inject({
    b.hook.transitions["DEFAULT"] = {
     state: {},
     time: 0.2,
-    timeFunction: KEY_SPLINES.EASE
+    timeFunction: KEY_SPLINES["EASE"]
    };
    b.hook.transitions["HIDDEN"] = {
     state: {
      offsetX: -(bWidth + bOfs)
     },
     time: 0.2,
-    timeFunction: KEY_SPLINES.LINEAR
+    timeFunction: KEY_SPLINES["LINEAR"]
    };
    b.doStateTransition("HIDDEN", true);
    this.buttonGroup.addFocusGui(b, bCol, bRow);

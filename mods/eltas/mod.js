@@ -15,7 +15,7 @@ eta["decodeEnum"] = function (enu, val) {
  for (var k in enu) {
   if (enu[k] == val) {
    // It's possible 'k' is obfuscated.
-   return rapture.mapBack.get(k) || k;
+   return rapture["mapBack"].get(k) || k;
   }
  }
  return val.toString();

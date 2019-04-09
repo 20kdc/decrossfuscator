@@ -12,9 +12,9 @@ var eta = window["mods"]["eltas"];
 // It is made up of 'components'.
 // These are specific sections the user can add and position within the overlay.
 eta["OverlayComponent"] = ig.Class.extend({
- visualId: "I just don't know what went wrong!",
+ "visualId": "I just don't know what went wrong!",
  init: function (vid) {
-  this.visualId = vid;
+  this["visualId"] = vid;
  },
  text: function () {
   // If this returns null, the component will disappear.
@@ -71,15 +71,15 @@ var calcOverlay = function (ovl) {
   if (!skipNextFirst)
    build += " ";
   skipNextFirst = false;
-  if (com.visualId == "") {
+  if (com["visualId"] == "") {
    build += txt;
   } else {
    if (txt == "") {
-    build += com.visualId;
-    if (com.visualId == "\n")
+    build += com["visualId"];
+    if (com["visualId"] == "\n")
      skipNextFirst = true;
    } else {
-    build += com.visualId + ":" + txt + ";";
+    build += com["visualId"] + ":" + txt + ";";
    }
   }
  }

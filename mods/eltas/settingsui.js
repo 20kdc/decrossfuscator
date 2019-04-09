@@ -115,14 +115,14 @@ eta["OptionsGui"] = rui["TitleOverlayGui"].extend({
   this["listBox2"].hook.transitions["DEFAULT"] = {
    state: {},
    time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
+   timeFunction: KEY_SPLINES["EASE"]
   };
   this["listBox2"].hook.transitions["HIDDEN"] = {
    state: {
     offsetX: -(ig.system.width / 2)
    },
    time: 0.5,
-   timeFunction: KEY_SPLINES.EASE
+   timeFunction: KEY_SPLINES["EASE"]
   };
   this["listBox2"].doStateTransition("HIDDEN", true);
 
