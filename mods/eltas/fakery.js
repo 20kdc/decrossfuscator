@@ -24,7 +24,7 @@ Math["emileatasLockedValue"] = null;
 // Deterministic RNG current value.
 Math["emileatasRandomValue"] = 0;
 
-Math["emileatasUseDRNG"] = false; // Don't for release, it breaks stuff
+Math["emileatasUseDRNG"] = true;
 
 // Needed for determinism.
 // function rnd() rv = ((rv + 0.1) * 13.9241512) rv = rv - math.floor(rv) return rv end
@@ -108,10 +108,17 @@ ig.GamepadManager.addHandlerCheck(function() {
 // This does the input filtering.
 ig.Input.inject({
  "emileatasMockDetails": null,
+ "emileatasTrueLastX": null,
+ "emileatasTrueLastY": null,
  "emileatasOldX": null,
  "emileatasOldY": null,
+ "emileatasMouseGuiActiveTracked": null,
+ "emileatasForceMouseGuiActiveAlways": false,
  "emileatasAccept": function (m) {
   if (m != null) {
+   // This is more invasive than I'd like, unfortunately.
+   // Some of this stuff does have *minor* effects on how the game acts.
+   // It's not any more severe than Angler, but still.
    this.currentDevice = ig.INPUT_DEVICES.KEYBOARD_AND_MOUSE;
    this.mouse.x = m["mouseX"];
    this.mouse.y = m["mouseY"];
@@ -121,10 +128,22 @@ ig.Input.inject({
    }
    this.mouseGuiActive = true;
   } else if (this["emileatasMockDetails"] != null) {
+   // Ending mock active block, clean up
+   this["emileatasMouseGuiActiveTracked"] = this.mouseGuiActive; // this can be updated in game code
    this.mouse.x = this["emileatasOldX"];
    this.mouse.y = this["emileatasOldY"];
   }
   this["emileatasMockDetails"] = m;
+  // Calculate mouseGuiActive updates to ensure this has no possible effects on gameplay
+  if ((this.mouse.x != this["emileatasTrueLastX"]) || (this.mouse.y != this["emileatasTrueLastY"]))
+   this["emileatasMouseGuiActiveTracked"] = true;
+  this["emileatasTrueLastX"] = this.mouse.x;
+  this["emileatasTrueLastY"] = this.mouse.y;
+  if (this["emileatasForceMouseGuiActiveAlways"]) {
+   this.mouseGuiActive = true;
+  } else {
+   this.mouseGuiActive = this["emileatasMouseGuiActiveTracked"];
+  }
  },
  pressed: function (a) {
   var m = this["emileatasMockDetails"];
@@ -265,25 +284,33 @@ ig.System.inject({
    ig.system["emileatasAJAXTransferToTask"] = false;
   }
  });
- var oldAjax = $.ajax;
- $.ajax = function (a) {
+ // This may not need quoting, but consider it a safety measure.
+ var oldAjax = $["ajax"];
+ $["ajax"] = function (a) {
   if ((ig.system) && (ig.system.running)) {
    if (ig.system["emileatasAJAXTransferToTask"]) {
-    var oldSuccess = a.success;
+    var oldSuccess = a["success"];
+    var oldError = a["error"];
     // As per usual, making it a task ensures it isn't handled until after the frame,
     //  and after that frames are disabled until the request finishes
     ig.system["emileatasTasks"].push(function () {
-     a.success = function (res) {
+     a["success"] = function (res) {
       oldSuccess.bind(this)(res);
+      ig.system["emileatasRunningTask"] = false;
+     };
+     a["error"] = function (res) {
+      oldError.bind(this)(res);
       ig.system["emileatasRunningTask"] = false;
      };
      oldAjax(a);
     });
+    // Task has been pushed, return now
+    return;
    } else {
     if (!ig.system["emileatasRunningTask"]) {
      ig.system["emileatasWarning"] = "AJAX Request Performed Outside Of Loading Barrier!\nDeterminism Compromised. Contact 20kdc Immediately.";
-     if (a.url)
-      ig.system["emileatasWarning"] += "\nTrace: " + a.url;
+     if (a["url"])
+      ig.system["emileatasWarning"] += "\nTrace: " + a["url"];
     }
    }
   }

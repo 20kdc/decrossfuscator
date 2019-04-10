@@ -29,17 +29,28 @@ eta["TASCore"].inject({
 
  "loadReader": function () {
   var fs = require("fs");
-  this["reader"] = JSON.parse(fs.readFileSync("eltasBuffer.json", "utf8"));
+  try {
+   this["reader"] = JSON.parse(fs.readFileSync("eltasBuffer.json", "utf8"));
+  } catch (e) {
+   return false;
+  }
   if (this["reader"] instanceof Array) {
    this["reader"] = {
     "frames": this["reader"]
    };
   }
+  // Check for presence of newer features, and enable them / switch to legacy behavior as required.
   if (this["reader"]["dRNG"]) {
    Math["emileatasUseDRNG"] = true;
   } else {
    Math["emileatasUseDRNG"] = false;
   }
+  if (this["reader"]["mouseGui"]) {
+   ig.Input["emileatasForceMouseGuiActiveAlways"] = false;
+  } else {
+   ig.Input["emileatasForceMouseGuiActiveAlways"] = true;
+  }
+  // ----
   this["readerTimer"] = 0;
   // If there's a writer, then checkpointing would upset the flow of that writer
   // If there's no writer, nothing to worry about
@@ -47,6 +58,7 @@ eta["TASCore"].inject({
    ig.Timer["emileatasCheckpoint"]();
   if (this["reader"]["frames"].length == 0)
    this["reader"] = null;
+  return true;
  },
 
  "advanceReader": function () {
@@ -59,10 +71,11 @@ eta["TASCore"].inject({
  },
 
  "enterInputSrc": function (i) {
-  // Entering READER input source?
+  // Entering READER input source? Try to load. If that fails, change mind
   if (i == eta["TAS_INPUT_SOURCE"]["READER"])
    if (this["reader"] == null)
-    this["loadReader"]();
+    if (!this["loadReader"]())
+     return this["enterInputSrc"](eta["TAS_INPUT_SOURCE"]["DIRECT"]);
   this.parent(i);
  },
 

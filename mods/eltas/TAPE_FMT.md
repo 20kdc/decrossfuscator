@@ -14,13 +14,17 @@ Where 'VALUE' is the array.
 
 In this object is the 'frames' array, containing one input mock per frame (see Frame Format).
 
-If there is a key in the object 'dRNG' that is truthy, the Deterministic RNG is used.
+If the object has a key 'dRNG' that is truthy, the Deterministic RNG is used.
 
 The Deterministic RNG algorithm is in fakery.js.
 
 The Deterministic RNG is not directly controllable by the user; Disabling it only exists for legacy tapes.
 
 A user who particularly needs it to be used for some reason can trigger it by creating a blank 'empty array' tape.
+
+If the object has a key 'mouseGui' that is truthy, mouseGui is properly emulated.
+
+Again, see fakery.js ; this is another feature that's only disablable for legacy tapes.
 
 ## Key States
 
