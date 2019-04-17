@@ -116,8 +116,8 @@ eta["overlayComponents"]["eltas.Warning"] = new (eta["OverlayComponent"].extend(
  text: function () {
   if (ig.system["emileatasWarning"])
    return ig.system["emileatasWarning"];
-  if (!Math["emileatasUseDRNG"])
-   return "'Constant RNG' in use. Some may be offended by the lack of randomness.";
+  if (Math["emileatasUseDRNG"])
+   return "Deterministic RNG in use. This doesn't work properly yet, so expect playback issues";
   return eta["tascore"]["speedTrackingOverruns"].toString() + "/" + eta["tascore"]["speedTrackingUnderruns"].toString() + "/" + eta["tascore"]["speedTimeBreak"].toString();
   //return null;
  }

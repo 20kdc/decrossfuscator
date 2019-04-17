@@ -24,7 +24,7 @@ Math["emileatasLockedValue"] = null;
 // Deterministic RNG current value.
 Math["emileatasRandomValue"] = 0;
 
-Math["emileatasUseDRNG"] = true;
+Math["emileatasUseDRNG"] = false;
 
 // Needed for determinism.
 // function rnd() rv = ((rv + 0.1) * 13.9241512) rv = rv - math.floor(rv) return rv end
