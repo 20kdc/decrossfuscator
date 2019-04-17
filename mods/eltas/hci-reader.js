@@ -39,23 +39,24 @@ eta["TASCore"].inject({
     "frames": this["reader"]
    };
   }
-  // Check for presence of newer features, and enable them / switch to legacy behavior as required.
-  if (this["reader"]["dRNG"]) {
-   Math["emileatasUseDRNG"] = true;
-  } else {
-   Math["emileatasUseDRNG"] = false;
-  }
-  if (this["reader"]["mouseGui"]) {
-   ig.Input["emileatasForceMouseGuiActiveAlways"] = false;
-  } else {
-   ig.Input["emileatasForceMouseGuiActiveAlways"] = true;
-  }
-  // ----
   this["readerTimer"] = 0;
-  // If there's a writer, then checkpointing would upset the flow of that writer
+  // If there's a writer, then checkpointing & messing around would upset the flow of that writer
   // If there's no writer, nothing to worry about
-  if (this["writer"] == null)
+  if (this["writer"] == null) {
+   // Check for presence of newer features, and enable them / switch to legacy behavior as required.
+   if (this["reader"]["dRNG"]) {
+    Math["emileatasUseDRNG"] = true;
+   } else {
+    Math["emileatasUseDRNG"] = false;
+   }
+   if (this["reader"]["mouseGui"]) {
+    ig.Input["emileatasForceMouseGuiActiveAlways"] = false;
+   } else {
+    ig.Input["emileatasForceMouseGuiActiveAlways"] = true;
+   }
+   // ----
    ig.Timer["emileatasCheckpoint"]();
+  }
   if (this["reader"]["frames"].length == 0)
    this["reader"] = null;
   return true;

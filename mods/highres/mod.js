@@ -146,22 +146,47 @@ ig.Parallax.inject({
  }
 });
 
-// Issue 4: Map "Not quite parallaxes" (heat-dng)
+// Issue 4: Map "Not quite parallaxes" (heat-dng, Great Scar)
 // These *aren't* Parallaxes. They're actually map layers.
-// The Impact map system this is all based on seems to be rather sensitive to *any* attempt to alter this in any way.
-// Trying to redefine tilesize *will get your bottom kicked with exceptions*.
-// The best theoretical bet is to scale the tileset *without* getting the implementer's bottom kicked,
-//  a continuation of the "just scale the assets" plan.
-// ...Somehow.
-
+// These need a very special complex set of workarounds because of several reasons:
+// 1. Obviously these were NOT calibrated for the new screensize.
+//    They *HAVE* to be double-sized to have even a remote chance of working properly.
+// 2. redrawChunkTile presumably hasn't been used before for this particular case. At least I assume that's why it crashes.
+//    The assertion seems to be along the lines of (ig.system.width % tilesize) == 0 and (ig.system.height % tilesize) == 0.
+//    Screwing this up WILL BREAK THE GAME. Turns out the screen width/height isn't divisible by 32. So, workarounds.
+// 3. Even after 1., the scroll algorithm needs more adjustment. Unsolved.
+/*
 ig.MAP["Background"].inject({
  init: function (a, b) {
-  if (a["distance"] != 1) {
-   // MAGIC HERE
-  }
+  if (a["distance"] && a["distance"] != 1)
+   a["tilesize"] *= scale;
   this.parent(a, b);
+ },
+ setTileset: function(a) {
+  this.parent(a);
+  if (this.distance && this.distance != 1)
+   this.tiles = new DoubledImage(this.tilesetName);
+ },
+ redrawChunkTile: function (a, b, c, d, e, f, g) {
+  if (this.distance && this.distance != 1) {
+   d = Math.floor(d / this.tilesize) * this.tilesize;
+   e = Math.floor(e / this.tilesize) * this.tilesize;
+   f = Math.floor(f / this.tilesize) * this.tilesize;
+   g = Math.floor(g / this.tilesize) * this.tilesize;
+   this.parent(a, b, c, d, e, f, g);
+  } else {
+   this.parent(a, b, c, d, e, f, g);
+  }
  }
-});
+ setScreenPos: function (a, b) {
+  if (this.distance && this.distance != 1) {
+   // hmm
+   this.parent(a, b);
+  } else {
+   this.parent(a, b);
+  }
+ }
+});*/
 
 // Issue 5: Rhombus/Button Misalignment
 // The StartMenu buttons are manually positioned and thus don't align on the big triangle.
@@ -175,3 +200,72 @@ sc.StartMenu.inject({
  }
 });
 
+// Issue 6: World map doesn't work properly due to being designed for a fixed screen size. Scale it up.
+// Also handle some more minor details (they used the corner image again)
+sc.MapWorldMap.inject({
+ gfx: new DoubledImage("media/gui/world-map.png"),
+ _addAreaButton: function (a, b) {
+  var btn = this.parent(a, b);
+  btn.setPos((b["position"]["x"] * scale) - 6, (b["position"]["y"] * scale) - 7);
+  return btn;
+ }
+});
+sc.MapAreaContainer.inject({
+ background: new DoubledImage("media/gui/env-white.png")
+});
+
+// Issue 7: The "MainMenu" background pattern in general needs something done to it, or else the gradient repeats.
+// This is more complicated since it'd be best to remodel the asset here,
+//  but at the same time distributing a modded version is not gonna happen.
+// Luckily the changes can be programmatically performed anyway.
+sc.MainMenu.inject({
+ init: function () {
+  if (!this.constructor.PATTERN) {
+   var i = ig.$new("canvas");
+   i.width = 32 * scale * ig.system.scale;
+   i.height = 320 * scale * ig.system.scale;
+   var j = ig.system.getBufferContext(i);
+   // This bit's really complex but seems to work?
+   // 160 source 'scanline pairs'
+   for (var y = 0; y < 160; y++) {
+    // 160 * scale 'scanline pairs' in destination
+    for (var y2 = 0; y2 < scale; y2++) {
+     j.drawImage(this.gfx.data, 0, y * 2 * ig.system.scale, 32 * ig.system.scale, 2 * ig.system.scale, 0, ((y * 2 * scale) + (y2 * 2)) * ig.system.scale, (32 * scale) * ig.system.scale, 2 * ig.system.scale);
+    }
+   }
+   var gfx2 = new ig.ImageCanvasWrapper(i);
+   // env-white is used as a dummy here so that it doesn't crash
+   var ptrn = new ig.ImagePattern("media/gui/env-white.png", 0, 0, 32 * scale, 320 * scale, ig.ImagePattern.OPT.REPEAT_X);
+   ptrn.sourceImage = gfx2;
+   ptrn.initBuffer();
+   this.constructor.PATTERN = ptrn;
+  }
+  this.parent();
+ }
+});
+
+// Issue 8: Only the top half of the Circuits menu works.
+// This is a rather interesting one, because it's one of those issues that 'shouldn't happen'.
+// But sc.CircuitTreeDetail.Node has some really odd rules about node selection.
+// And by 'odd rules' I mean there's an explicit check to see if the cursor is within specific global coordinates.
+// There's no good way of doing this, let's lie to the code instead...
+sc.CircuitTreeDetail.Node.inject({
+ isMouseOver: function () {
+  var tempOld = sc.control.getMouseY;
+  var tempOld2 = this.hook.screenCoords.y;
+  var tempOld3 = this.coords.h;
+
+  sc.control.getMouseY = function () {
+   return tempOld.bind(sc.control)() / scale;
+  };
+  this.hook.screenCoords.y /= scale;
+  this.coords.h /= scale;
+
+  var res = this.parent();
+  
+  sc.control.getMouseY = tempOld;
+  this.hook.screenCoords.y = tempOld2;
+  this.coords.h = tempOld3;
+  return res;
+ }
+});

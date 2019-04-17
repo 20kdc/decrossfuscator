@@ -55,7 +55,6 @@ ig.Timer["emileatasCheckpoint"] = function () {
  ig.system.actualTick = 0;
  ig.cleanCache();
  Date["simulated"] = 0;
- Math["emileatasRandomValue"] = 0;
  // Camera is used for some triggers (has effect on gameplay).
  // Try to wipe it completely clean if this would not affect gameplay
  if (sc.model.isTitle()) {
@@ -73,6 +72,12 @@ ig.Timer["emileatasCheckpoint"] = function () {
   ig.camera._time = 0;
   ig.camera._transitionFunction = null;
   ig.camera._cameraInBounds = false;
+  // This stuff has more obvious effects on gameplay, so major checkpoints only.
+  // In particular re-trying a macro tape until it works out in the situations you use it in is better than
+  //  getting the same randomness every time you try to record the macro tape.
+  Math["emileatasRandomValue"] = 0;
+  ig.input["emileatasTrueLastX"] = null;
+  ig.input["emileatasTrueLastY"] = null;
  }
 };
 

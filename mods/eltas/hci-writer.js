@@ -24,6 +24,8 @@ eta["TASCore"].inject({
     };
     if (Math["emileatasUseDRNG"])
      this["writer"]["dRNG"] = true;
+    if (ig.Input["emileatasForceMouseGuiActiveAlways"])
+     this["writer"]["mouseGui"] = true;
     ig.Timer["emileatasCheckpoint"]();
    }
   }
