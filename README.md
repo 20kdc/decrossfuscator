@@ -1,4 +1,8 @@
 # Decrossfuscator
+
+## PLEASE NOTE! As of some version of CrossCode, they deobf'd the JS. This means Decrossfuscator core is redundant!
+## This is a good thing! Be happy! Thank Radical Fish Games!
+
 ## a project to undo the effects of Google Closure Compiler 20120711 on a specific game
 
 For instructions, read the working diagram and pray.
