@@ -16,6 +16,9 @@ var rosettaGlobals = require("./lib/rosetta-global-data");
 
 var oldMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[2], "utf8"));
 var newMap = mapper.loadDeobfToObf(fs.readFileSync(process.argv[3], "utf8"));
+// just to generate the warnings
+mapper.loadObfToDeobf(fs.readFileSync(process.argv[2], "utf8"));
+mapper.loadObfToDeobf(fs.readFileSync(process.argv[3], "utf8"));
 
 var mainMatcher = new matcher.Matcher(process.argv[5]);
 mainMatcher.loadProfileFile(process.argv[4]);

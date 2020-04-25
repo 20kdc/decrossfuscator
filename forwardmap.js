@@ -7,6 +7,7 @@
 
 // 2:oldJS 3:oldMAP 4:newJS 5:lastNewMAP 6:lostsym-exclusion-matcher 7:cc-version 8:mode
 
+var os = require("os");
 var fs = require("fs");
 var process = require("process");
 var child_process = require("child_process");
@@ -58,7 +59,7 @@ function processCore(idx, len, st) {
 
 var remainingSize = oldTokens.length;
 var currentIndex = 0;
-var parts = 8;
+var parts = os.cpus().length;
 var partSize = Math.floor(oldTokens.length / parts);
 if (partSize != 0) {
  for (var i = 0; i < parts - 1; i++) {
